@@ -543,3 +543,41 @@ a:hover {
         scroll-behavior: auto !important;
     }
 }
+
+/* ==========================================================================
+   ESTILOS COMPLEMENTARIOS DÍA 2 (HERO, BÚSQUEDA Y RESULTADOS)
+   ========================================================================== */
+.hero-avianca {
+    background: linear-gradient(180deg, var(--color-brand-50) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8) var(--space-6);
+}
+
+.shadow-1 {
+    box-shadow: var(--shadow-1) !important;
+}
+
+.shadow-2 {
+    box-shadow: var(--shadow-2) !important;
+}
+
+.shadow-3 {
+    box-shadow: var(--shadow-3) !important;
+}
+
+.max-w-700 {
+    max-width: 700px;
+}
+
+.form-control, .form-select {
+    border-color: var(--color-line-300);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    transition: border-color var(--dur-base) var(--ease), box-shadow var(--dur-base) var(--ease);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--color-brand-600);
+    box-shadow: 0 0 0 3px rgba(217, 0, 0, 0.15);
+    outline: none;
+}

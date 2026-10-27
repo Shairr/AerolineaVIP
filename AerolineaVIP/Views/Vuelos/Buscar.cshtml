@@ -1,0 +1,204 @@
+﻿@model AerolineaVIP.Models.BusquedaVueloViewModel
+@{
+    ViewBag.Title = "Buscador de Vuelos Privados";
+    var rutasFrecuencias = ViewBag.RutasFrecuencias as List<AerolineaVIP.Models.RutaInfoViewModel> ?? new List<AerolineaVIP.Models.RutaInfoViewModel>();
+}
+
+<!-- ==========================================================================
+     PANTALLA 5: BUSCADOR AVANZADO DE VUELOS (Requisito 10 de PLAN.md)
+     ========================================================================== -->
+<div class="py-4">
+    <!-- Breadcrumb y Título -->
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small mb-2">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" class="text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Buscador de Vuelos</li>
+            </ol>
+        </nav>
+        <h1 class="h2 fw-bold text-dark mb-1">Reserva tu Vuelo Privado</h1>
+        <p class="text-secondary small mb-0">
+            Conectamos los principales aeropuertos de Ecuador a bordo de nuestra flota ejecutiva Embraer Phenom 300E.
+        </p>
+    </div>
+
+    <!-- Tarjeta Principal del Buscador (DESIGN.md Sección 6.3) -->
+    <div class="card card-avianca shadow-3 p-4 p-md-5 border-0 mb-5">
+        @using (Html.BeginForm("Resultados", "Vuelos", FormMethod.Get, new { id = "flightSearchForm", @class = "needs-validation" }))
+        {
+            <!-- Tabs Tipo Pill para Tipo de Viaje -->
+            <div class="d-flex gap-2 mb-4">
+                <div class="btn-group" role="group" aria-label="Tipo de Viaje">
+                    <input type="radio" class="btn-check" name="tipoViaje" id="tabSoloIda" value="solo-ida" 
+                           @(Model.TipoViaje != "ida-vuelta" ? "checked" : "") onchange="toggleFechaRegreso(false)">
+                    <label class="btn btn-outline-danger px-4 rounded-pill me-2 fw-bold" for="tabSoloIda">
+                        Solo Ida
+                    </label>
+
+                    <input type="radio" class="btn-check" name="tipoViaje" id="tabIdaVuelta" value="ida-vuelta" 
+                           @(Model.TipoViaje == "ida-vuelta" ? "checked" : "") onchange="toggleFechaRegreso(true)">
+                    <label class="btn btn-outline-danger px-4 rounded-pill fw-bold" for="tabIdaVuelta">
+                        Ida y Vuelta
+                    </label>
+                </div>
+            </div>
+
+            <!-- Fila de Controles de Origen, Intercambio y Destino -->
+            <div class="row g-3 align-items-center mb-4">
+                <!-- Origen -->
+                <div class="col-md-5">
+                    <label for="origenInput" class="form-label fw-bold text-dark small mb-1">
+                        &#128205; Ciudad de Origen
+                    </label>
+                    <div class="input-group">
+                        <select id="origenInput" name="origen" class="form-select form-control" style="height: 52px;" required>
+                            @foreach (var aero in Model.AeropuertosDisponibles)
+                            {
+                                <option value="@aero.Value" @(aero.Value == Model.OrigenCodigo ? "selected" : "")>
+                                    @aero.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Botón Circular de Intercambio (DESIGN.md 6.3 - 40px) -->
+                <div class="col-md-2 text-center pt-md-4">
+                    <button type="button" class="btn btn-outline-secondary rounded-circle shadow-sm" 
+                            id="btnIntercambiar" title="Intercambiar origen y destino"
+                            style="width: 44px; height: 44px; padding: 0;" onclick="intercambiarRuta()">
+                        &#8644;
+                    </button>
+                </div>
+
+                <!-- Destino -->
+                <div class="col-md-5">
+                    <label for="destinoInput" class="form-label fw-bold text-dark small mb-1">
+                        &#127937; Ciudad de Destino
+                    </label>
+                    <div class="input-group">
+                        <select id="destinoInput" name="destino" class="form-select form-control" style="height: 52px;" required>
+                            @foreach (var aero in Model.AeropuertosDisponibles)
+                            {
+                                <option value="@aero.Value" @(aero.Value == Model.DestinoCodigo ? "selected" : "")>
+                                    @aero.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fila de Fechas y Pasajeros -->
+            <div class="row g-3 align-items-end mb-4">
+                <!-- Fecha Salida -->
+                <div class="col-md-4">
+                    <label for="fechaSalidaInput" class="form-label fw-bold text-dark small mb-1">
+                        &#128197; Fecha de Salida
+                    </label>
+                    <input type="date" id="fechaSalidaInput" name="fechaSalida" class="form-control" 
+                           value="@(Model.FechaSalida.HasValue ? Model.FechaSalida.Value.ToString("yyyy-MM-dd") : "")" 
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")" style="height: 52px;" required />
+                </div>
+
+                <!-- Fecha Regreso (Opcional según Tab) -->
+                <div class="col-md-4" id="contenedorFechaRegreso" style="@(Model.TipoViaje == "ida-vuelta" ? "" : "opacity: 0.5; pointer-events: none;")">
+                    <label for="fechaRegresoInput" class="form-label fw-bold text-dark small mb-1">
+                        &#128197; Fecha de Regreso
+                    </label>
+                    <input type="date" id="fechaRegresoInput" name="fechaRegreso" class="form-control" 
+                           value="@(Model.FechaRegreso.HasValue ? Model.FechaRegreso.Value.ToString("yyyy-MM-dd") : "")" 
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")" style="height: 52px;" />
+                </div>
+
+                <!-- Pasajeros (1 a 7) -->
+                <div class="col-md-4">
+                    <label for="pasajerosSelect" class="form-label fw-bold text-dark small mb-1">
+                        &#128101; Pasajeros (M&aacute;x. 7)
+                    </label>
+                    <select id="pasajerosSelect" name="pasajeros" class="form-select form-control" style="height: 52px;">
+                        @for (int i = 1; i <= 7; i++)
+                        {
+                            <option value="@i" @(i == Model.CantidadPasajeros ? "selected" : "")>
+                                @i Pasajero@(i > 1 ? "s" : "")
+                            </option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botón de Envío Primario de Ancho Completo en Móvil / Alineado en Escritorio -->
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-avianca-primary px-5 py-3 fs-6">
+                    &#128269; Buscar Vuelos Disponibles
+                </button>
+            </div>
+        }
+    </div>
+
+    <!-- Guía Informativa de Frecuencias Reales de la Base de Datos -->
+    <div class="card card-avianca p-4 border bg-light mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="fs-5">&#8505;</span>
+            <h4 class="h5 fw-bold mb-0 text-dark">D&iacute;as de Operaci&oacute;n y Frecuencias Oficiales</h4>
+        </div>
+        <p class="text-secondary small mb-3">
+            Para facilitar tu planificaci&oacute;n de viaje, a continuaci&oacute;n se detallan los d&iacute;as de operaci&oacute;n y horarios regulares registrados en nuestra base de datos institucional:
+        </p>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-hover bg-white rounded border align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="py-2">Ruta</th>
+                        <th class="py-2">D&iacute;as de Vuelo</th>
+                        <th class="py-2">Horarios Habituales</th>
+                        <th class="py-2 text-end">Tarifa Referencial</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in rutasFrecuencias)
+                    {
+                        <tr>
+                            <td class="fw-bold text-dark">
+                                @r.OrigenCiudad (@r.OrigenCodigo) &rarr; @r.DestinoCiudad (@r.DestinoCodigo)
+                            </td>
+                            <td>
+                                <span class="badge bg-danger text-white">@r.DiasOperacion</span>
+                            </td>
+                            <td class="small text-muted">@r.HorariosResumen</td>
+                            <td class="text-end fw-bold text-danger">USD @r.TarifaReferencial.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function toggleFechaRegreso(habilitar) {
+            var contenedor = document.getElementById('contenedorFechaRegreso');
+            var input = document.getElementById('fechaRegresoInput');
+            if (habilitar) {
+                contenedor.style.opacity = '1';
+                contenedor.style.pointerEvents = 'auto';
+                input.required = true;
+            } else {
+                contenedor.style.opacity = '0.5';
+                contenedor.style.pointerEvents = 'none';
+                input.required = false;
+                input.value = '';
+            }
+        }
+
+        function intercambiarRuta() {
+            var origen = document.getElementById('origenInput');
+            var destino = document.getElementById('destinoInput');
+            var temp = origen.value;
+            origen.value = destino.value;
+            destino.value = temp;
+        }
+    </script>
+}
