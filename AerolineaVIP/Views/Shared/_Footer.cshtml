@@ -1,0 +1,75 @@
+﻿<footer class="footer-avianca">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Columna 1: Reserva -->
+            <div class="col-6 col-md-3">
+                <h6 class="footer-heading">Reserva</h6>
+                <ul class="footer-links">
+                    <li><a href="@Url.Action("Buscar", "Vuelos", new { area = "" })">Buscar vuelos</a></li>
+                    <li><a href="@Url.Action("Index", "Home", new { area = "" })#destinos">Destinos exclusivos</a></li>
+                    <li><a href="@Url.Action("Index", "Home", new { area = "" })#flota">Flota Phenom 300E</a></li>
+                    <li><a href="@Url.Action("Buscar", "Vuelos", new { area = "" })">Horarios e itinerarios</a></li>
+                </ul>
+            </div>
+
+            <!-- Columna 2: Tu Viaje -->
+            <div class="col-6 col-md-3">
+                <h6 class="footer-heading">Tu Viaje</h6>
+                <ul class="footer-links">
+                    <li><a href="@Url.Action("Index", "CheckIn", new { area = "" })">Check-in online</a></li>
+                    <li><a href="@Url.Action("MisReservas", "Reservas", new { area = "" })">Mis reservas</a></li>
+                    <li><a href="@Url.Action("Index", "Comprobantes", new { area = "" })">Comprobantes y recibos</a></li>
+                    <li><a href="@Url.Action("Index", "Home", new { area = "" })#servicios">Servicios VIP a bordo</a></li>
+                </ul>
+            </div>
+
+            <!-- Columna 3: Ayuda -->
+            <div class="col-6 col-md-3">
+                <h6 class="footer-heading">Ayuda</h6>
+                <ul class="footer-links">
+                    <li><a href="@Url.Action("Contact", "Home", new { area = "" })">Centro de atenci&oacute;n</a></li>
+                    <li><a href="@Url.Action("Contact", "Home", new { area = "" })">Preguntas frecuentes</a></li>
+                    <li><a href="@Url.Action("Contact", "Home", new { area = "" })">Pol&iacute;ticas de equipaje</a></li>
+                    <li><a href="@Url.Action("Contact", "Home", new { area = "" })">Contacto y soporte VIP</a></li>
+                </ul>
+            </div>
+
+            <!-- Columna 4: Compañía -->
+            <div class="col-6 col-md-3">
+                <h6 class="footer-heading">Compa&ntilde;&iacute;a</h6>
+                <ul class="footer-links">
+                    <li><a href="@Url.Action("About", "Home", new { area = "" })">Sobre Aerol&iacute;nea VIP</a></li>
+                    <li><a href="@Url.Action("About", "Home", new { area = "" })">Protocolos de seguridad</a></li>
+                    <li><a href="@Url.Action("About", "Home", new { area = "" })">Alianzas y salas privadas</a></li>
+                    <li><a href="@Url.Action("About", "Home", new { area = "" })">Sostenibilidad y aviaci&oacute;n</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-divider"></div>
+
+        <!-- Fila Inferior: Créditos, Copyright y Legales -->
+        <div class="row align-items-center gy-3">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="footer-bottom-text">
+                    &copy; @DateTime.Now.Year <strong>Aerol&iacute;nea VIP S.A.</strong> Todos los derechos reservados.
+                </p>
+                <div class="mt-2">
+                    <span class="footer-academic-badge">
+                        &#127891; ESPE &mdash; DIT | Grupo Nro. 06 (Denilson Celi &amp; Farid Hinojoza)
+                    </span>
+                </div>
+            </div>
+
+            <div class="col-md-6 text-center text-md-end">
+                <ul class="list-inline mb-0 footer-bottom-text">
+                    <li class="list-inline-item"><a href="#" class="text-secondary text-decoration-none">T&eacute;rminos y condiciones</a></li>
+                    <li class="list-inline-item text-secondary">&bull;</li>
+                    <li class="list-inline-item"><a href="#" class="text-secondary text-decoration-none">Pol&iacute;tica de privacidad</a></li>
+                    <li class="list-inline-item text-secondary">&bull;</li>
+                    <li class="list-inline-item"><a href="#" class="text-secondary text-decoration-none">Contrato de transporte</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
