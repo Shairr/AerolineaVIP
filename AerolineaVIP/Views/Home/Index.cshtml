@@ -1,33 +1,240 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@model IEnumerable<AerolineaVIP.Models.Ruta>
+@{
+    ViewBag.Title = "Vuelos Privados Ejecutivos";
+    var aeropuertos = ViewBag.Aeropuertos as List<AerolineaVIP.Models.Aeropuerto> ?? new List<AerolineaVIP.Models.Aeropuerto>();
+    var modeloAeronave = ViewBag.ModeloAeronave as AerolineaVIP.Models.ModeloAeronave;
+    string fechaSugerida = ViewBag.FechaSugerida as string ?? DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
 }
 
-<main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
-    </section>
-
-    <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>
-                ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                enables a clean separation of concerns and gives you full control over markup
-                for enjoyable, agile development.
+<!-- ==========================================================================
+     HERO SECTION CORPORATIVO — PANTALLA 1 (Requisito 1 de PLAN.md)
+     ========================================================================== -->
+<section class="hero-avianca py-5 mb-5">
+    <div class="row align-items-center gy-4">
+        <div class="col-lg-7">
+            <span class="badge-role badge-role-cliente mb-3">
+                &#9992; Vuelos Ejecutivos Privados
+            </span>
+            <h1 class="display-5 fw-bold mb-3 text-dark">
+                Vuela a tu pr&oacute;ximo destino
+                <span class="text-danger d-block">Viajes privados con atenci&oacute;n personalizada</span>
+            </h1>
+            <p class="lead text-secondary mb-4">
+                Experimenta el m&aacute;ximo confort, puntualidad y privacidad a bordo de nuestra exclusiva flota 
+                <strong>Embraer Phenom 300E</strong>, dise&ntilde;ada para conectar los principales destinos de Ecuador.
             </p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-        </section>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="#buscador-rapido" class="btn btn-avianca-primary">
+                    Reservar Vuelo Ahora
+                </a>
+                <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-avianca-secondary">
+                    Buscador Avanzado
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-5 text-center">
+            <div class="card card-avianca p-4 shadow-sm border-0 bg-light">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="badge bg-danger text-white px-3 py-2 rounded-pill">Aeronave Insignia</span>
+                    <span class="text-muted fw-bold">Capacidad: 7 plazas</span>
+                </div>
+                <h4 class="mb-2 text-dark">@(modeloAeronave?.Fabricante ?? "Embraer") @(modeloAeronave?.Nombre ?? "Phenom 300E")</h4>
+                <p class="small text-secondary mb-3">
+                    Configuraci&oacute;n ejecutiva club seating, velocidad crucero superior y atenci&oacute;n preferencial.
+                </p>
+                <div class="row g-2 text-center pt-2 border-top">
+                    <div class="col-4">
+                        <span class="d-block fw-bold text-danger">7</span>
+                        <small class="text-muted">Pasajeros</small>
+                    </div>
+                    <div class="col-4">
+                        <span class="d-block fw-bold text-danger">VIP</span>
+                        <small class="text-muted">Catering</small>
+                    </div>
+                    <div class="col-4">
+                        <span class="d-block fw-bold text-danger">Directo</span>
+                        <small class="text-muted">Rutas Clave</small>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</main>
+</section>
+
+<!-- ==========================================================================
+     BUSCADOR RÁPIDO FLOTANTE "ENCUENTRA TU VUELO"
+     ========================================================================== -->
+<section id="buscador-rapido" class="mb-5">
+    <div class="card card-avianca shadow-3 p-4 border-0">
+        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+            <h3 class="h4 mb-0 text-dark">
+                &#128269; Encuentra tu vuelo privado
+            </h3>
+            <span class="small text-muted">Tarifas y disponibilidad en tiempo real</span>
+        </div>
+
+        @using (Html.BeginForm("Resultados", "Vuelos", FormMethod.Get, new { @class = "row g-3 align-items-end" }))
+        {
+            <!-- Origen -->
+            <div class="col-md-3">
+                <label for="origenSelect" class="form-label fw-bold text-dark small mb-1">Origen</label>
+                <select id="origenSelect" name="origen" class="form-select form-control">
+                    @foreach (var aero in aeropuertos)
+                    {
+                        <option value="@aero.CodigoIATA" @(aero.CodigoIATA == "UIO" ? "selected" : "")>
+                            @aero.Localidad (@aero.CodigoIATA)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Destino -->
+            <div class="col-md-3">
+                <label for="destinoSelect" class="form-label fw-bold text-dark small mb-1">Destino</label>
+                <select id="destinoSelect" name="destino" class="form-select form-control">
+                    @foreach (var aero in aeropuertos.Where(a => a.CodigoIATA != "UIO"))
+                    {
+                        <option value="@aero.CodigoIATA" @(aero.CodigoIATA == "GYE" ? "selected" : "")>
+                            @aero.Localidad (@aero.CodigoIATA)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Fecha Salida -->
+            <div class="col-md-3">
+                <label for="fechaSalida" class="form-label fw-bold text-dark small mb-1">Fecha de Salida</label>
+                <input type="date" id="fechaSalida" name="fechaSalida" class="form-control" 
+                       value="@fechaSugerida" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            </div>
+
+            <!-- Pasajeros -->
+            <div class="col-md-1">
+                <label for="pasajerosInput" class="form-label fw-bold text-dark small mb-1">Pasajeros</label>
+                <select id="pasajerosInput" name="pasajeros" class="form-select form-control">
+                    @for (int i = 1; i <= 7; i++)
+                    {
+                        <option value="@i">@i</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Botón Buscar Vuelos -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-avianca-primary w-100">
+                    Buscar vuelos
+                </button>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- ==========================================================================
+     TARJETAS DE DESTINOS AUTORIZADOS CON DATOS DE BD
+     ========================================================================== -->
+<section id="destinos" class="mb-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="h3 fw-bold mb-1">Destinos autorizados en Ecuador</h2>
+            <p class="text-secondary mb-0 small">Operaciones regulares con conexi&oacute;n desde Quito (UIO) seg&uacute;n la base de datos oficial</p>
+        </div>
+        <a href="@Url.Action("Buscar", "Vuelos")" class="text-danger fw-bold small text-decoration-none">
+            Ver todas las frecuencias &rarr;
+        </a>
+    </div>
+
+    <div class="row g-4">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var ruta in Model)
+            {
+                <div class="col-md-4">
+                    <div class="card card-avianca card-avianca-interactive h-100 p-4 border">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-light text-danger fw-bold border">
+                                @ruta.Aeropuerto.CodigoIATA &rarr; @ruta.Aeropuerto1.CodigoIATA
+                            </span>
+                            <span class="badge bg-danger text-white rounded-pill px-2 py-1 small">
+                                Directo
+                            </span>
+                        </div>
+
+                        <h3 class="h4 fw-bold mb-2">@ruta.Aeropuerto1.Localidad</h3>
+                        <p class="text-secondary small mb-3">
+                            @ruta.Aeropuerto1.Nombre
+                        </p>
+
+                        <div class="bg-light p-2 rounded mb-3 small">
+                            <span class="text-muted d-block">D&iacute;as de operaci&oacute;n:</span>
+                            <strong class="text-dark">
+                                @(ruta.Aeropuerto1.CodigoIATA == "GYE" ? "Martes, Jueves y Sábados" :
+                                  ruta.Aeropuerto1.CodigoIATA == "MEC" ? "Lunes, Miércoles y Viernes" :
+                                  ruta.Aeropuerto1.CodigoIATA == "GPS" ? "Domingos (Escala en Guayaquil)" : "Consultar frecuencias")
+                            </strong>
+                        </div>
+
+                        <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small text-muted d-block">Tarifa referencial</span>
+                                <span class="h4 fw-bold text-danger mb-0">USD @ruta.TarifaReferencial.ToString("N0")</span>
+                            </div>
+                            <a href="@Url.Action("Resultados", "Vuelos", new { origen = ruta.Aeropuerto.CodigoIATA, destino = ruta.Aeropuerto1.CodigoIATA, fechaSalida = fechaSugerida })" 
+                               class="btn btn-avianca-primary-sm">
+                                Ver vuelos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+<!-- ==========================================================================
+     SECCIÓN DE BENEFICIOS Y EXPERIENCIA VIP
+     ========================================================================== -->
+<section id="servicios" class="mb-5 py-4 bg-light rounded-3 p-4">
+    <div class="text-center max-w-700 mx-auto mb-4">
+        <h2 class="h3 fw-bold mb-2">&iquest;Por qu&eacute; volar con Aerol&iacute;nea VIP?</h2>
+        <p class="text-secondary small">Dise&ntilde;ado para ejecutivos, familias y pasajeros que valoran el tiempo, la seguridad y el confort.</p>
+    </div>
+
+    <div class="row g-4 text-center">
+        <div class="col-md-4">
+            <div class="p-3">
+                <div class="brand-icon-flight mx-auto mb-3" style="width: 48px; height: 48px; font-size: 20px;">
+                    &#9201;
+                </div>
+                <h4 class="h5 fw-bold mb-2">Check-in Express en 15 Min</h4>
+                <p class="text-secondary small">
+                    Olvídate de largas filas y salas congestionadas. Llega con 15 minutos de anticipación y embarca de inmediato.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3">
+                <div class="brand-icon-flight mx-auto mb-3" style="width: 48px; height: 48px; font-size: 20px;">
+                    &#129523;
+                </div>
+                <h4 class="h5 fw-bold mb-2">Equipaje VIP Incluido</h4>
+                <p class="text-secondary small">
+                    Todas nuestras tarifas ejecutivas contemplan equipaje de mano y maleta de bodega sin recargos sorpresa.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3">
+                <div class="brand-icon-flight mx-auto mb-3" style="width: 48px; height: 48px; font-size: 20px;">
+                    &#127863;
+                </div>
+                <h4 class="h5 fw-bold mb-2">Salas Privadas y Catering</h4>
+                <p class="text-secondary small">
+                    Acceso preferente a lounges privados y servicio gourmet de cortesía durante tu vuelo.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
