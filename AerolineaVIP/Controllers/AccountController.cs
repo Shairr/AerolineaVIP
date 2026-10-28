@@ -62,6 +62,7 @@ namespace AerolineaVIP.Controllers
         }
 
         //
+        //
         // POST: /Account/Login
         [HttpPost]
         [AllowAnonymous]
@@ -73,20 +74,43 @@ namespace AerolineaVIP.Controllers
                 return View(model);
             }
 
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+            // 1. Determinar el UserName real:
+            // Si escribió un correo (ej. admin@aerolineavip.com), buscamos su usuario
+            var usuarioPorEmail = await UserManager.FindByEmailAsync(model.Email);
+            string nombreUsuarioFinal = usuarioPorEmail != null ? usuarioPorEmail.UserName : model.Email;
+
+            // 2. Intentar iniciar sesión con el nombre de usuario
+            var result = await SignInManager.PasswordSignInAsync(nombreUsuarioFinal, model.Password, model.RememberMe, shouldLockout: false);
+
             switch (result)
             {
                 case SignInStatus.Success:
-                    return RedirectToLocal(returnUrl);
+                    // Si venía intentando entrar a una URL protegida (como /VuelosAdmin), lo enviamos allá
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
+                    // Redirección por Rol si entró directamente al Login
+                    var usuarioLogueado = await UserManager.FindByNameAsync(nombreUsuarioFinal);
+                    var roles = await UserManager.GetRolesAsync(usuarioLogueado.Id);
+
+                    if (roles.Contains("Administrador") || roles.Contains("SuperUsuario"))
+                    {
+                        // Si tienes /VuelosAdmin o /Admin
+                        return RedirectToAction("Index", "VuelosAdmin");
+                    }
+                    return RedirectToAction("Index", "Home");
+
                 case SignInStatus.LockedOut:
                     return View("Lockout");
+
                 case SignInStatus.RequiresVerification:
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
+
                 case SignInStatus.Failure:
                 default:
-                    ModelState.AddModelError("", "Invalid login attempt.");
+                    ModelState.AddModelError("", "Usuario o contraseña incorrectos.");
                     return View(model);
             }
         }

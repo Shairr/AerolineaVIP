@@ -1,0 +1,46 @@
+﻿@model IEnumerable<AerolineaVIP.Models.Aeronave>
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Matricula)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.EstadoAeronave.Descripcion)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.ModeloAeronave.Fabricante)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Matricula)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.EstadoAeronave.Descripcion)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ModeloAeronave.Fabricante)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { id=item.AeronaveId }) |
+            @Html.ActionLink("Details", "Details", new { id=item.AeronaveId }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.AeronaveId })
+        </td>
+    </tr>
+}
+
+</table>
