@@ -1,4 +1,4 @@
-﻿@model AerolineaVIP.Models.ResultadoBusquedaViewModel
+@model AerolineaVIP.Models.ResultadoBusquedaViewModel
 @{
     ViewBag.Title = "Resultados de Vuelos";
 }
@@ -113,7 +113,13 @@
                             </span>
                         </div>
 
-                        <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = v.VueloId })" 
+                               class="btn btn-outline-secondary btn-sm py-1 px-3" 
+                               title="Ver mapa de asientos del Phenom 300E en solo lectura">
+                                &#128186; Ver Cabina (P7)
+                            </a>
+
                             @if (hayCupos)
                             {
                                 <span class="badge bg-success text-white py-1 px-3">
@@ -190,9 +196,9 @@
                                             USD @v.TarifaClassic.ToString("N2")
                                         </span>
                                     </div>
-                                    <a href="#" class="btn btn-avianca-outline-sm @(!hayCupos ? "disabled" : "")" 
-                                       onclick="alert('Vuelo seleccionado: #@v.VueloId (Tarifa Classic). En el Día 3 esta acción conectará con la Pantalla 7 y 8 de selección de asientos en cabina.'); return false;">
-                                        Seleccionar Classic
+                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Classic", pasajeros = Model.Criterios.CantidadPasajeros })" 
+                                       class="btn btn-avianca-outline-sm @(!hayCupos ? "disabled" : "")">
+                                        Seleccionar Classic &rarr;
                                     </a>
                                 </div>
                             </div>
@@ -218,9 +224,9 @@
                                             USD @v.TarifaFlex.ToString("N2")
                                         </span>
                                     </div>
-                                    <a href="#" class="btn btn-avianca-primary-sm @(!hayCupos ? "disabled" : "")" 
-                                       onclick="alert('Vuelo seleccionado: #@v.VueloId (Tarifa Executive Flex). En el Día 3 esta acción conectará con la Pantalla 7 y 8 de selección de asientos en cabina.'); return false;">
-                                        Seleccionar Flex
+                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Flex", pasajeros = Model.Criterios.CantidadPasajeros })" 
+                                       class="btn btn-avianca-primary-sm @(!hayCupos ? "disabled" : "")">
+                                        Seleccionar Flex &rarr;
                                     </a>
                                 </div>
                             </div>

@@ -1,0 +1,214 @@
+@model AerolineaVIP.Models.SeleccionAsientosViewModel
+
+@{
+    ViewBag.Title = "Paso 1: Selección de Asientos — Vuelo " + Model.CodigoVuelo;
+}
+
+<div class="container py-4">
+    <!-- Stepper de Progreso (Paso 1 Activo) -->
+    @Html.Partial("_PasosReserva", 1)
+
+    <!-- Encabezado de la Pantalla 8 -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 8</span>
+                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 1 de 4</span>
+                <span class="small text-muted">Aeronave Oficial: Phenom 300E</span>
+            </div>
+            <h1 class="h2 fw-bold text-dark mb-0">
+                Selecci&oacute;n de Asientos en Cabina
+            </h1>
+            <p class="text-secondary small mb-0">
+                Haga clic sobre los asientos verdes disponibles para elegir el lugar de cada pasajero.
+            </p>
+        </div>
+
+        <div>
+            <a href="@Url.Action("Resultados", "Vuelos")" class="btn btn-outline-secondary btn-sm">
+                &larr; Cambiar vuelo
+            </a>
+        </div>
+    </div>
+
+    @using (Html.BeginForm("SeleccionarAsientos", "Reservas", FormMethod.Post, new { id = "formSeleccionAsientos" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.VueloId)
+        @Html.HiddenFor(m => m.CodigoVuelo)
+        @Html.HiddenFor(m => m.TarifaSeleccionada)
+        @Html.HiddenFor(m => m.PrecioUnitario)
+        @Html.HiddenFor(m => m.CantidadPasajeros)
+        @Html.HiddenFor(m => m.AsientosSeleccionados, new { id = "inputAsientosSeleccionados" })
+
+        <div class="row g-4">
+            <!-- Columna Izquierda: Mapa Interactivo de la Cabina -->
+            <div class="col-lg-7">
+                <div class="card card-avianca p-4 shadow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="h5 fw-bold text-dark mb-0">Mapa Interactivo de Asientos</h3>
+                        <span class="badge bg-danger text-white rounded-pill px-3 py-1" id="badgePasajerosMeta">
+                            Seleccionar: @Model.CantidadPasajeros asiento@(Model.CantidadPasajeros > 1 ? "s" : "")
+                        </span>
+                    </div>
+
+                    <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-3">
+                        <span>&#128161;</span>
+                        <span>Seleccione exactamente <strong>@Model.CantidadPasajeros</strong> asiento(s) para habilitar el siguiente paso.</span>
+                    </div>
+
+                    @Html.ValidationMessageFor(m => m.AsientosSeleccionados, "", new { @class = "text-danger fw-bold small d-block mb-3" })
+
+                    <!-- Vista Parcial _MapaAsientos en Modo Interactivo -->
+                    @Html.Partial("_MapaAsientos", Model.MapaCabina)
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Panel de Resumen Lateral del Viaje -->
+            <div class="col-lg-5">
+                <div class="resumen-vuelo-sticky">
+                    <div class="card card-avianca p-4 shadow-2 border">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                            <h4 class="h6 fw-bold mb-0 text-dark">Resumen de Selecci&oacute;n</h4>
+                            <span class="badge bg-danger text-white">Tarifa @Model.TarifaSeleccionada</span>
+                        </div>
+
+                        <!-- Datos del Vuelo -->
+                        <div class="mb-3">
+                            <div class="small text-muted">Itinerario:</div>
+                            <div class="fw-bold text-dark fs-6">
+                                @Model.OrigenCiudad (@Model.OrigenCodigo) &rarr; @Model.DestinoCiudad (@Model.DestinoCodigo)
+                            </div>
+                            <div class="small text-secondary">
+                                &#128197; @Model.FechaOperacion.ToString("dd MMMM yyyy") &bull; @DateTime.Today.Add(Model.HoraSalida).ToString("HH:mm") hrs
+                            </div>
+                        </div>
+
+                        <!-- Resumen de Asientos Seleccionados en tiempo real -->
+                        <div class="card bg-light p-3 border rounded-3 mb-3">
+                            <div class="small fw-bold text-dark mb-1">Asientos Elegidos:</div>
+                            <div id="contenedorChipsAsientos" class="d-flex flex-wrap gap-2 my-2">
+                                <span class="small text-muted fst-italic" id="textoSinAsientos">Ning&uacute;n asiento seleccionado a&uacute;n.</span>
+                            </div>
+                            <div class="d-flex justify-content-between small text-secondary border-top pt-2">
+                                <span>Pasajeros a ubicar:</span>
+                                <strong><span id="contadorSeleccionados">0</span> de @Model.CantidadPasajeros</strong>
+                            </div>
+                        </div>
+
+                        <!-- Desglose de Tarifas -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span>Tarifa por pasajero:</span>
+                                <span>USD @Model.PrecioUnitario.ToString("N2")</span>
+                            </div>
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span>Cantidad de pasajeros:</span>
+                                <span>&times; @Model.CantidadPasajeros</span>
+                            </div>
+                            <hr class="my-2" />
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark">Subtotal estimado:</span>
+                                <span class="h4 fw-bold text-danger mb-0" id="subtotalMonto">
+                                    USD @Model.Subtotal.ToString("N2")
+                                </span>
+                            </div>
+                            <span class="small text-muted d-block mt-1" style="font-size: 11px;">
+                                * Tasas aeroportuarias e impuestos (IVA 15%) calculados en el Paso 3.
+                            </span>
+                        </div>
+
+                        <!-- Botón de Continuar -->
+                        <button type="submit" class="btn btn-avianca-primary w-100 py-3 fw-bold" id="btnContinuarPaso2" disabled="disabled">
+                            Continuar con Datos de Pasajeros (Paso 2) &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var maxSeleccionables = @Model.CantidadPasajeros;
+            var asientosSeleccionados = [];
+
+            // Leer valor previo si existe
+            var inicial = $("#inputAsientosSeleccionados").val();
+            if (inicial) {
+                asientosSeleccionados = inicial.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            }
+
+            actualizarEstadoVisual();
+
+            // Interacción con los botones de asientos disponibles
+            $(".asiento-disponible").on("click", function () {
+                var codigo = $(this).data("codigo");
+                var index = asientosSeleccionados.indexOf(codigo);
+
+                if (index > -1) {
+                    // Deseleccionar
+                    asientosSeleccionados.splice(index, 1);
+                } else {
+                    // Seleccionar
+                    if (asientosSeleccionados.length < maxSeleccionables) {
+                        asientosSeleccionados.push(codigo);
+                    } else if (maxSeleccionables === 1) {
+                        // Reemplazar asiento único
+                        asientosSeleccionados = [codigo];
+                    } else {
+                        alert("Solo puede seleccionar un máximo de " + maxSeleccionables + " asiento(s) para esta reserva.");
+                        return;
+                    }
+                }
+
+                actualizarEstadoVisual();
+            });
+
+            function actualizarEstadoVisual() {
+                // Actualizar clases en los botones de cabina
+                $(".asiento-boton").each(function () {
+                    var cod = $(this).data("codigo");
+                    var estado = $(this).data("estado");
+
+                    if (estado === "DISPONIBLE") {
+                        if (asientosSeleccionados.indexOf(cod) > -1) {
+                            $(this).addClass("asiento-seleccionado");
+                            $(this).find(".asiento-subtexto").text("Elegido");
+                        } else {
+                            $(this).removeClass("asiento-seleccionado");
+                            $(this).find(".asiento-subtexto").text("Libre");
+                        }
+                    }
+                });
+
+                // Guardar en input oculto
+                var valorString = asientosSeleccionados.join(', ');
+                $("#inputAsientosSeleccionados").val(valorString);
+
+                // Actualizar panel lateral
+                $("#contadorSeleccionados").text(asientosSeleccionados.length);
+
+                if (asientosSeleccionados.length > 0) {
+                    $("#textoSinAsientos").hide();
+                    var chipsHtml = "";
+                    asientosSeleccionados.forEach(function (c) {
+                        chipsHtml += '<span class="badge bg-danger rounded-pill px-3 py-1 fs-6">&#128186; ' + c + '</span>';
+                    });
+                    $("#contenedorChipsAsientos").html(chipsHtml);
+                } else {
+                    $("#contenedorChipsAsientos").html('<span class="small text-muted fst-italic" id="textoSinAsientos">Ningún asiento seleccionado aún.</span>');
+                }
+
+                // Habilitar o deshabilitar botón Continuar
+                if (asientosSeleccionados.length === maxSeleccionables) {
+                    $("#btnContinuarPaso2").removeAttr("disabled");
+                } else {
+                    $("#btnContinuarPaso2").attr("disabled", "disabled");
+                }
+            }
+        });
+    </script>
+}

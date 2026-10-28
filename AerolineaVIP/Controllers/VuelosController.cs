@@ -288,6 +288,152 @@ namespace AerolineaVIP.Controllers
             return string.Join(", ", nombres.Take(nombres.Count - 1)) + " y " + nombres.Last();
         }
 
+        // GET: Vuelos/Disponibilidad/5 (Pantalla 7)
+        [HttpGet]
+        public ActionResult Disponibilidad(int? id)
+        {
+            var query = db.Vueloes
+                .Include(v => v.Frecuencia.Ruta.Aeropuerto)
+                .Include(v => v.Frecuencia.Ruta.Aeropuerto1)
+                .Include(v => v.Aeronave.ModeloAeronave)
+                .Include(v => v.ReservaPasajeroVueloes);
+
+            Vuelo vuelo = null;
+            if (id.HasValue && id.Value > 0)
+            {
+                vuelo = query.FirstOrDefault(v => v.VueloId == id.Value);
+            }
+
+            if (vuelo == null)
+            {
+                vuelo = query.FirstOrDefault(v => v.EstadoVueloCodigo != "CANCELADO");
+            }
+
+            if (vuelo == null)
+            {
+                return RedirectToAction("Buscar");
+            }
+
+            TimeSpan duracion = (vuelo.Frecuencia.HoraLlegada >= vuelo.Frecuencia.HoraSalida)
+                ? (vuelo.Frecuencia.HoraLlegada - vuelo.Frecuencia.HoraSalida)
+                : (vuelo.Frecuencia.HoraLlegada.Add(TimeSpan.FromHours(24)) - vuelo.Frecuencia.HoraSalida);
+
+            string duracionStr = duracion.Hours > 0
+                ? $"{duracion.Hours}h {duracion.Minutes:D2}m"
+                : $"{duracion.Minutes} min";
+
+            decimal tarifaBase = vuelo.Frecuencia?.Ruta?.TarifaReferencial ?? 450.00m;
+            decimal tarifaFlex = Math.Round(tarifaBase * 1.35m, 2);
+
+            // Obtener ocupaciones de este vuelo
+            var asignaciones = vuelo.ReservaPasajeroVueloes
+                .Where(r => r.EstadoAsignacionCodigo != "CANCELADA")
+                .ToList();
+
+            var mapa = GenerarMapaPhenom300E(vuelo.VueloId, vuelo.Aeronave?.Matricula ?? "AV-01", asignaciones, soloLectura: true);
+
+            int ocupados = mapa.Asientos.Count(a => a.EstadoVisual == "OCUPADO");
+            int reservados = mapa.Asientos.Count(a => a.EstadoVisual == "RESERVADO");
+            int disponibles = mapa.Asientos.Count(a => a.EstadoVisual == "DISPONIBLE");
+
+            var model = new DisponibilidadVueloViewModel
+            {
+                VueloId = vuelo.VueloId,
+                CodigoVuelo = "VIP" + vuelo.VueloId.ToString("D5"),
+                FechaOperacion = vuelo.FechaOperacion,
+                DiaSemanaNombre = ObtenerNombreDiaSemana(vuelo.Frecuencia.DiaSemana),
+                HoraSalida = vuelo.Frecuencia.HoraSalida,
+                HoraLlegada = vuelo.Frecuencia.HoraLlegada,
+                DuracionTexto = duracionStr,
+                OrigenCodigo = vuelo.Frecuencia.Ruta.Aeropuerto.CodigoIATA,
+                OrigenCiudad = vuelo.Frecuencia.Ruta.Aeropuerto.Localidad,
+                OrigenNombre = vuelo.Frecuencia.Ruta.Aeropuerto.Nombre,
+                DestinoCodigo = vuelo.Frecuencia.Ruta.Aeropuerto1.CodigoIATA,
+                DestinoCiudad = vuelo.Frecuencia.Ruta.Aeropuerto1.Localidad,
+                DestinoNombre = vuelo.Frecuencia.Ruta.Aeropuerto1.Nombre,
+                AeronaveMatricula = vuelo.Aeronave?.Matricula ?? "AV-01",
+                ModeloAeronave = vuelo.Aeronave?.ModeloAeronave?.Nombre ?? "Phenom 300E",
+                CapacidadTotal = 7,
+                AsientosOcupados = ocupados,
+                AsientosReservados = reservados,
+                AsientosDisponibles = disponibles,
+                EstadoVueloCodigo = vuelo.EstadoVueloCodigo,
+                TarifaClassic = tarifaBase,
+                TarifaFlex = tarifaFlex,
+                MapaCabina = mapa
+            };
+
+            return View(model);
+        }
+
+        public static MapaCabinaViewModel GenerarMapaPhenom300E(int vueloId, string matricula, List<ReservaPasajeroVuelo> asignaciones, bool soloLectura, int maxSeleccionables = 1, string preseleccionados = "")
+        {
+            var listaSeleccionados = (preseleccionados ?? "")
+                .Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim().ToUpperInvariant())
+                .ToList();
+
+            var asientosDefecto = new[]
+            {
+                new { Num = 1, Cod = "1D", Fila = (byte)1, Lado = "D", Ubic = "Fila 1, lado derecho, ventanilla (junto a cabina de mando)" },
+                new { Num = 2, Cod = "2D", Fila = (byte)2, Lado = "D", Ubic = "Fila 2, lado derecho, ventanilla" },
+                new { Num = 3, Cod = "2I", Fila = (byte)2, Lado = "I", Ubic = "Fila 2, lado izquierdo, ventanilla (tras puerta de acceso)" },
+                new { Num = 4, Cod = "3D", Fila = (byte)3, Lado = "D", Ubic = "Fila 3, lado derecho, ventanilla (mesa ejecutiva)" },
+                new { Num = 5, Cod = "3I", Fila = (byte)3, Lado = "I", Ubic = "Fila 3, lado izquierdo, ventanilla (mesa ejecutiva)" },
+                new { Num = 6, Cod = "4D", Fila = (byte)4, Lado = "D", Ubic = "Fila 4, lado derecho, ventanilla (junto al baño VIP)" },
+                new { Num = 7, Cod = "4I", Fila = (byte)4, Lado = "I", Ubic = "Fila 4, lado izquierdo, ventanilla" }
+            };
+
+            var mapa = new MapaCabinaViewModel
+            {
+                VueloId = vueloId,
+                AeronaveMatricula = matricula,
+                ModeloAeronave = "Embraer Phenom 300E",
+                EsSoloLectura = soloLectura,
+                MaxAsientosSeleccionables = maxSeleccionables,
+                AsientosSeleccionadosCodigos = preseleccionados
+            };
+
+            foreach (var item in asientosDefecto)
+            {
+                var asig = asignaciones?.FirstOrDefault(a => a.NumeroAsiento == item.Num);
+
+                string visual = "DISPONIBLE";
+                string color = "Verde";
+
+                if (asig != null)
+                {
+                    if (asig.EstadoAsignacionCodigo == "CONFIRMADA")
+                    {
+                        visual = "OCUPADO";
+                        color = "Rojo";
+                    }
+                    else if (asig.EstadoAsignacionCodigo == "PENDIENTE")
+                    {
+                        visual = "RESERVADO";
+                        color = "Morado";
+                    }
+                }
+
+                bool seleccionado = listaSeleccionados.Contains(item.Cod.ToUpperInvariant());
+
+                mapa.Asientos.Add(new AsientoEstadoViewModel
+                {
+                    NumeroAsiento = item.Num,
+                    CodigoAsiento = item.Cod,
+                    Fila = item.Fila,
+                    Lado = item.Lado,
+                    Ubicacion = item.Ubic,
+                    EstadoVisual = visual,
+                    ColorEstado = color,
+                    EsSeleccionado = seleccionado,
+                    EsAccesible = (visual == "DISPONIBLE")
+                });
+            }
+
+            return mapa;
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
