@@ -1,4 +1,4 @@
-@model AerolineaVIP.Models.MapaCabinaViewModel
+﻿@model AerolineaVIP.Models.MapaCabinaViewModel
 
 @{
     var asiento1D = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "1D");
@@ -78,11 +78,11 @@
         </div>
         <div class="d-flex align-items-center gap-1">
             <span class="badge rounded-pill" style="background-color: #6F42C1; width: 14px; height: 14px; padding: 0;">&nbsp;</span>
-            <span class="small fw-semibold text-dark">Reservado (Morado)</span>
+            <span class="small fw-semibold text-dark">Reservado - Check-in Pendiente (Morado)</span>
         </div>
         <div class="d-flex align-items-center gap-1">
             <span class="badge rounded-pill" style="background-color: var(--color-error-600); width: 14px; height: 14px; padding: 0;">&nbsp;</span>
-            <span class="small fw-semibold text-dark">Ocupado (Rojo)</span>
+            <span class="small fw-semibold text-dark">Ocupado - Check-in Confirmado (Rojo)</span>
         </div>
         @if (!Model.EsSoloLectura)
         {

@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Data.Entity;
 using System.Linq;
 using System.Web.Mvc;
@@ -63,7 +64,9 @@ namespace AerolineaVIP.Controllers
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto)
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto1)
                 .Include(v => v.Aeronave.ModeloAeronave)
-                .Include(v => v.ReservaPasajeroVueloes)
+                .AsNoTracking()
+                .Include(v => v.ReservaPasajeroVueloes.Select(rpv => rpv.CheckIns))
+                .Include(v => v.ReservaPasajeroVueloes.Select(rpv => rpv.Reserva))
                 .Where(v => v.Frecuencia.Ruta.Aeropuerto.CodigoIATA == origen
                          && v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA == destino
                          && v.EstadoVueloCodigo != "CANCELADO");
@@ -97,10 +100,19 @@ namespace AerolineaVIP.Controllers
             else
             {
                 // Sin fecha específica: mostrar los próximos vuelos programados en la BD
-                vuelosDb = query.OrderBy(v => v.FechaOperacion)
+                vuelosDb = query.Where(v => DbFunctions.TruncateTime(v.FechaOperacion) >= DateTime.Today)
+                                .OrderBy(v => v.FechaOperacion)
                                 .ThenBy(v => v.Frecuencia.HoraSalida)
                                 .Take(6)
                                 .ToList();
+
+                if (!vuelosDb.Any())
+                {
+                    vuelosDb = query.OrderBy(v => v.FechaOperacion)
+                                    .ThenBy(v => v.Frecuencia.HoraSalida)
+                                    .Take(6)
+                                    .ToList();
+                }
 
                 resultado.FechaConVuelos = vuelosDb.Any();
             }
@@ -290,13 +302,16 @@ namespace AerolineaVIP.Controllers
 
         // GET: Vuelos/Disponibilidad/5 (Pantalla 7)
         [HttpGet]
+        [OutputCache(NoStore = true, Duration = 0, VaryByParam = "*")]
         public ActionResult Disponibilidad(int? id)
         {
             var query = db.Vueloes
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto)
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto1)
                 .Include(v => v.Aeronave.ModeloAeronave)
-                .Include(v => v.ReservaPasajeroVueloes);
+                .AsNoTracking()
+                .Include(v => v.ReservaPasajeroVueloes.Select(rpv => rpv.CheckIns))
+                .Include(v => v.ReservaPasajeroVueloes.Select(rpv => rpv.Reserva));
 
             Vuelo vuelo = null;
             if (id.HasValue && id.Value > 0)
@@ -325,12 +340,15 @@ namespace AerolineaVIP.Controllers
             decimal tarifaBase = vuelo.Frecuencia?.Ruta?.TarifaReferencial ?? 450.00m;
             decimal tarifaFlex = Math.Round(tarifaBase * 1.35m, 2);
 
-            // Obtener ocupaciones de este vuelo
-            var asignaciones = vuelo.ReservaPasajeroVueloes
-                .Where(r => r.EstadoAsignacionCodigo != "CANCELADA")
-                .ToList();
+            // Obtener ocupaciones de este vuelo (combinando DB, sesiÃ³n y memoria global)
+            var asignaciones = ObtenerAsignacionesCombinadas(
+                vuelo.VueloId,
+                vuelo.ReservaPasajeroVueloes,
+                Session["MisReservasNuevas"] as List<ReservaResumenItemViewModel>
+            );
 
-            var mapa = GenerarMapaPhenom300E(vuelo.VueloId, vuelo.Aeronave?.Matricula ?? "AV-01", asignaciones, soloLectura: true);
+            var checkInsSes = Session["CodigosCheckInCompletados"] as HashSet<string>;
+            var mapa = GenerarMapaPhenom300E(vuelo.VueloId, vuelo.Aeronave?.Matricula ?? "AV-01", asignaciones, soloLectura: true, codigosCheckInSesion: checkInsSes);
 
             int ocupados = mapa.Asientos.Count(a => a.EstadoVisual == "OCUPADO");
             int reservados = mapa.Asientos.Count(a => a.EstadoVisual == "RESERVADO");
@@ -366,7 +384,84 @@ namespace AerolineaVIP.Controllers
             return View(model);
         }
 
-        public static MapaCabinaViewModel GenerarMapaPhenom300E(int vueloId, string matricula, List<ReservaPasajeroVuelo> asignaciones, bool soloLectura, int maxSeleccionables = 1, string preseleccionados = "")
+        private static readonly ConcurrentDictionary<int, HashSet<string>> _asientosOcupadosGlobal = 
+            new ConcurrentDictionary<int, HashSet<string>>();
+
+        private static readonly ConcurrentDictionary<int, HashSet<string>> _asientosCheckInCompletadoGlobal = 
+            new ConcurrentDictionary<int, HashSet<string>>();
+
+        private static readonly ConcurrentDictionary<string, bool> _codigosReservaCheckInCompletado = 
+            new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+        public static void RegistrarAsientosOcupados(int vueloId, IEnumerable<string> codigos)
+        {
+            if (codigos == null) return;
+            var set = _asientosOcupadosGlobal.GetOrAdd(vueloId, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+            lock (set)
+            {
+                foreach (var c in codigos)
+                {
+                    if (!string.IsNullOrWhiteSpace(c))
+                        set.Add(c.Trim().ToUpperInvariant());
+                }
+            }
+        }
+
+        public static void RegistrarCheckInCompletado(string codigoReserva, int vueloId, IEnumerable<string> codigos = null)
+        {
+            if (!string.IsNullOrWhiteSpace(codigoReserva))
+            {
+                _codigosReservaCheckInCompletado[codigoReserva.Trim().ToUpperInvariant()] = true;
+            }
+            if (codigos != null)
+            {
+                var set = _asientosCheckInCompletadoGlobal.GetOrAdd(vueloId, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+                lock (set)
+                {
+                    foreach (var c in codigos)
+                    {
+                        if (!string.IsNullOrWhiteSpace(c))
+                            set.Add(c.Trim().ToUpperInvariant());
+                    }
+                }
+            }
+        }
+
+        public static void LiberarAsientos(int vueloId, IEnumerable<string> codigos)
+        {
+            if (codigos == null) return;
+            if (_asientosOcupadosGlobal.TryGetValue(vueloId, out var set))
+            {
+                lock (set)
+                {
+                    foreach (var c in codigos)
+                    {
+                        if (!string.IsNullOrWhiteSpace(c))
+                            set.Remove(c.Trim().ToUpperInvariant());
+                    }
+                }
+            }
+            if (_asientosCheckInCompletadoGlobal.TryGetValue(vueloId, out var setCheckIn))
+            {
+                lock (setCheckIn)
+                {
+                    foreach (var c in codigos)
+                    {
+                        if (!string.IsNullOrWhiteSpace(c))
+                            setCheckIn.Remove(c.Trim().ToUpperInvariant());
+                    }
+                }
+            }
+        }
+
+        public static MapaCabinaViewModel GenerarMapaPhenom300E(
+            int vueloId, 
+            string matricula, 
+            List<ReservaPasajeroVuelo> asignaciones, 
+            bool soloLectura, 
+            int maxSeleccionables = 1, 
+            string preseleccionados = "",
+            IEnumerable<string> codigosCheckInSesion = null)
         {
             var listaSeleccionados = (preseleccionados ?? "")
                 .Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
@@ -380,7 +475,7 @@ namespace AerolineaVIP.Controllers
                 new { Num = 3, Cod = "2I", Fila = (byte)2, Lado = "I", Ubic = "Fila 2, lado izquierdo, ventanilla (tras puerta de acceso)" },
                 new { Num = 4, Cod = "3D", Fila = (byte)3, Lado = "D", Ubic = "Fila 3, lado derecho, ventanilla (mesa ejecutiva)" },
                 new { Num = 5, Cod = "3I", Fila = (byte)3, Lado = "I", Ubic = "Fila 3, lado izquierdo, ventanilla (mesa ejecutiva)" },
-                new { Num = 6, Cod = "4D", Fila = (byte)4, Lado = "D", Ubic = "Fila 4, lado derecho, ventanilla (junto al baño VIP)" },
+                new { Num = 6, Cod = "4D", Fila = (byte)4, Lado = "D", Ubic = "Fila 4, lado derecho, ventanilla (junto al baÃ±o VIP)" },
                 new { Num = 7, Cod = "4I", Fila = (byte)4, Lado = "I", Ubic = "Fila 4, lado izquierdo, ventanilla" }
             };
 
@@ -401,14 +496,47 @@ namespace AerolineaVIP.Controllers
                 string visual = "DISPONIBLE";
                 string color = "Verde";
 
-                if (asig != null)
+                if (asig != null && asig.EstadoAsignacionCodigo != "CANCELADA")
                 {
-                    if (asig.EstadoAsignacionCodigo == "CONFIRMADA")
+                    // Determinar si el check-in ha sido completado
+                    bool tieneCheckIn = false;
+
+                    // 1. Si la asignaciÃ³n en BD contiene un CheckIn completado
+                    if (asig.CheckIns != null && asig.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
+                    {
+                        tieneCheckIn = true;
+                    }
+                    // 2. Si el cÃ³digo de reserva tiene check-in completado (sesiÃ³n o BD)
+                    else if (asig.Reserva != null && !string.IsNullOrWhiteSpace(asig.Reserva.CodigoReserva))
+                    {
+                        string codRes = asig.Reserva.CodigoReserva.Trim().ToUpperInvariant();
+                        if (_codigosReservaCheckInCompletado.ContainsKey(codRes) ||
+                            (codigosCheckInSesion != null && codigosCheckInSesion.Contains(codRes, StringComparer.OrdinalIgnoreCase)))
+                        {
+                            tieneCheckIn = true;
+                        }
+                    }
+                    // 3. Si el asiento estÃ¡ en la memoria global de check-ins
+                    if (!tieneCheckIn && _asientosCheckInCompletadoGlobal.TryGetValue(vueloId, out var setCheckIn))
+                    {
+                        lock (setCheckIn)
+                        {
+                            if (setCheckIn.Contains(item.Cod))
+                            {
+                                tieneCheckIn = true;
+                            }
+                        }
+                    }
+
+                    // Regla de negocio solicitada:
+                    // - Si el asiento estÃ¡ reservado pero aÃºn no efectÃºa el check-in -> MORADO (RESERVADO)
+                    // - Cuando se haya confirmado el check-in -> ROJO (OCUPADO)
+                    if (tieneCheckIn)
                     {
                         visual = "OCUPADO";
                         color = "Rojo";
                     }
-                    else if (asig.EstadoAsignacionCodigo == "PENDIENTE")
+                    else
                     {
                         visual = "RESERVADO";
                         color = "Morado";
@@ -434,6 +562,129 @@ namespace AerolineaVIP.Controllers
             return mapa;
         }
 
+        public static byte MapearCodigoANumeroAsiento(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo)) return 1;
+            switch (codigo.Trim().ToUpperInvariant())
+            {
+                case "1D": return 1;
+                case "2D": return 2;
+                case "2I": return 3;
+                case "3D": return 4;
+                case "3I": return 5;
+                case "4D": return 6;
+                case "4I": return 7;
+                default:
+                    byte num;
+                    return byte.TryParse(codigo, out num) ? num : (byte)1;
+            }
+        }
+
+        public static string MapearNumeroAsientoACodigo(byte num)
+        {
+            switch (num)
+            {
+                case 1: return "1D";
+                case 2: return "2D";
+                case 3: return "2I";
+                case 4: return "3D";
+                case 5: return "3I";
+                case 6: return "4D";
+                case 7: return "4I";
+                default: return num.ToString();
+            }
+        }
+
+        public static List<ReservaPasajeroVuelo> ObtenerAsignacionesCombinadas(
+            int vueloId, 
+            IEnumerable<ReservaPasajeroVuelo> asignacionesDb, 
+            IEnumerable<ReservaResumenItemViewModel> reservasSesion = null)
+        {
+            var resultado = asignacionesDb != null 
+                ? asignacionesDb.Where(a => a.EstadoAsignacionCodigo != "CANCELADA").ToList() 
+                : new List<ReservaPasajeroVuelo>();
+
+            // 1. Integrar reservas confirmadas en la sesiÃ³n del usuario
+            if (reservasSesion != null)
+            {
+                foreach (var r in reservasSesion)
+                {
+                    if (r.VueloId == vueloId && r.EstadoReservaCodigo != "CANCELADA" && !string.IsNullOrWhiteSpace(r.AsientosCodigos))
+                    {
+                        var cods = r.AsientosCodigos.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var cod in cods)
+                        {
+                            byte num = MapearCodigoANumeroAsiento(cod);
+                            var asigExistente = resultado.FirstOrDefault(a => a.NumeroAsiento == num);
+                            if (asigExistente == null)
+                            {
+                                var nuevaAsig = new ReservaPasajeroVuelo
+                                {
+                                    VueloId = vueloId,
+                                    NumeroAsiento = num,
+                                    EstadoAsignacionCodigo = "CONFIRMADA",
+                                    ImporteTramo = 450.00m,
+                                    FechaAsignacion = r.FechaCreacion,
+                                    Reserva = new Reserva
+                                    {
+                                        CodigoReserva = r.CodigoReserva,
+                                        EstadoReservaCodigo = r.EstadoReservaCodigo
+                                    }
+                                };
+                                if (r.TieneCheckIn)
+                                {
+                                    nuevaAsig.CheckIns = new List<CheckIn>
+                                    {
+                                        new CheckIn { EstadoCheckInCodigo = "COMPLETADO", FechaRegistro = DateTime.Now }
+                                    };
+                                }
+                                resultado.Add(nuevaAsig);
+                            }
+                            else if (r.TieneCheckIn)
+                            {
+                                if (asigExistente.CheckIns == null)
+                                {
+                                    asigExistente.CheckIns = new List<CheckIn>();
+                                }
+                                if (!asigExistente.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
+                                {
+                                    asigExistente.CheckIns.Add(new CheckIn
+                                    {
+                                        EstadoCheckInCodigo = "COMPLETADO",
+                                        FechaRegistro = DateTime.Now
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Integrar asientos ocupados registrados en la memoria global de la aplicaciÃ³n
+            if (_asientosOcupadosGlobal.TryGetValue(vueloId, out var setGlobal))
+            {
+                lock (setGlobal)
+                {
+                    foreach (var cod in setGlobal)
+                    {
+                        byte num = MapearCodigoANumeroAsiento(cod);
+                        if (!resultado.Any(a => a.NumeroAsiento == num))
+                        {
+                            resultado.Add(new ReservaPasajeroVuelo
+                            {
+                                VueloId = vueloId,
+                                NumeroAsiento = num,
+                                EstadoAsignacionCodigo = "CONFIRMADA",
+                                ImporteTramo = 450.00m,
+                                FechaAsignacion = DateTime.Now
+                            });
+                        }
+                    }
+                }
+            }
+
+            return resultado;
+        }
         protected override void Dispose(bool disposing)
         {
             if (disposing)

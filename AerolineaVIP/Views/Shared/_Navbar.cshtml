@@ -42,15 +42,17 @@
 
                     @if (Request.IsAuthenticated)
                     {
-                        if (User.IsInRole("Cliente"))
+                        if (User.IsInRole("Cliente") || User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link-avianca" href="@Url.Action("MisReservas", "Reservas", new { area = "" })">
+                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reservas" && ViewContext.RouteData.Values["action"]?.ToString() == "MisReservas" ? "active" : "")"
+                                   href="@Url.Action("MisReservas", "Reservas", new { area = "" })">
                                     Mis Reservas
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link-avianca" href="@Url.Action("Index", "CheckIn", new { area = "" })">
+                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "CheckIn" ? "active" : "")"
+                                   href="@Url.Action("Index", "CheckIn", new { area = "" })">
                                     Check-in
                                 </a>
                             </li>
