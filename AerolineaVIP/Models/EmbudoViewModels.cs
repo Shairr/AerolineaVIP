@@ -103,10 +103,14 @@ namespace AerolineaVIP.Models
         public string AsientoAsignado { get; set; }
 
         [Required(ErrorMessage = "El nombre es obligatorio")]
+        [StringLength(25, MinimumLength = 2, ErrorMessage = "El nombre debe tener entre 2 y 25 caracteres")]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\']+$", ErrorMessage = "El nombre solo puede contener letras y espacios")]
         [Display(Name = "Nombres completos")]
         public string Nombres { get; set; }
 
         [Required(ErrorMessage = "Los apellidos son obligatorios")]
+        [StringLength(25, MinimumLength = 2, ErrorMessage = "Los apellidos deben tener entre 2 y 25 caracteres")]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\']+$", ErrorMessage = "Los apellidos solo pueden contener letras y espacios")]
         [Display(Name = "Apellidos completos")]
         public string Apellidos { get; set; }
 
@@ -123,19 +127,24 @@ namespace AerolineaVIP.Models
         [Display(Name = "Fecha de nacimiento")]
         public DateTime? FechaNacimiento { get; set; }
 
+        [Display(Name = "Categoría de Pasajero")]
+        public string CategoriaEdad { get; set; } = "Adulto";
+
         [Display(Name = "Género")]
         public string Genero { get; set; } = "M";
 
         [Required(ErrorMessage = "El teléfono de contacto es obligatorio")]
-        [Phone]
+        [RegularExpression(@"^09\d{8}$", ErrorMessage = "El teléfono debe ser un celular ecuatoriano válido de 10 dígitos (ej: 0991234567)")]
         [Display(Name = "Teléfono de contacto")]
         public string Telefono { get; set; }
 
         [Required(ErrorMessage = "El correo electrónico es obligatorio")]
-        [EmailAddress(ErrorMessage = "Ingrese un correo electrónico válido")]
+        [StringLength(100, ErrorMessage = "El correo no puede superar los 100 caracteres")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Ingrese un correo electrónico válido sin espacios ni caracteres especiales")]
         [Display(Name = "Correo electrónico")]
         public string Email { get; set; }
 
+        [StringLength(250, ErrorMessage = "El requerimiento especial no puede superar los 250 caracteres")]
         [Display(Name = "Requerimiento especial o catering VIP")]
         public string RequerimientoEspecial { get; set; }
     }
@@ -195,7 +204,7 @@ namespace AerolineaVIP.Models
     }
 
     /// <summary>
-    /// Pantalla 11 (Paso 4): Simulación de pago académico seguro
+    /// Pantalla 11 (Paso 4): Pasarela de pago seguro con tarjeta
     /// </summary>
     public class PagoSimuladoViewModel
     {
@@ -215,10 +224,12 @@ namespace AerolineaVIP.Models
         public string MarcaTarjeta { get; set; } = "VISA"; // VISA, MC, AMEX, DINERS
 
         [Required(ErrorMessage = "Ingrese el nombre del titular como figura en la tarjeta")]
+        [StringLength(50, MinimumLength = 5, ErrorMessage = "El nombre del titular debe contener entre 5 y 50 caracteres")]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\']+$", ErrorMessage = "El nombre del titular solo puede contener letras y espacios")]
         [Display(Name = "Nombre del titular")]
         public string TitularTarjeta { get; set; }
 
-        [Required(ErrorMessage = "Ingrese el número de tarjeta simulado")]
+        [Required(ErrorMessage = "Ingrese el número de tarjeta")]
         [Display(Name = "Número de tarjeta")]
         public string NumeroTarjeta { get; set; }
 
@@ -231,11 +242,12 @@ namespace AerolineaVIP.Models
         public string AnioExpiracion { get; set; } = "28";
 
         [Required(ErrorMessage = "Ingrese el código de seguridad")]
+        [RegularExpression(@"^\d{3,4}$", ErrorMessage = "El código CVV debe tener 3 dígitos (o 4 para American Express)")]
         [Display(Name = "CVV / CVC")]
         public string Cvv { get; set; }
 
         [Range(typeof(bool), "true", "true", ErrorMessage = "Debe aceptar los términos de la transacción")]
-        [Display(Name = "Acepto las condiciones y confirmo que es una simulación académica.")]
+        [Display(Name = "Acepto los términos y condiciones de la compra del pasaje.")]
         public bool AceptoTerminos { get; set; }
     }
 

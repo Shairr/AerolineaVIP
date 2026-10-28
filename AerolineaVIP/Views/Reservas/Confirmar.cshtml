@@ -30,17 +30,6 @@
         </div>
     </div>
 
-    <!-- Alerta de Retención de Asientos (Temporizador Demostrativo de 15 Minutos) -->
-    <div class="alert alert-warning border-0 p-3 shadow-1 rounded-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color: var(--color-warning-50); color: var(--color-warning-600);">
-        <div class="d-flex align-items-center gap-2">
-            <span class="fs-4">&#9200;</span>
-            <div>
-                <strong>Asientos bloqueados temporalmente:</strong> Sus plazas en la aeronave <strong>@Model.AeronaveMatricula</strong> est&aacute;n retenidas durante los pr&oacute;ximos <span id="temporizadorMinutos" class="fw-bold">14:59</span> minutos.
-            </div>
-        </div>
-        <span class="badge bg-warning text-dark px-3 py-2">Retenci&oacute;n Activa</span>
-    </div>
-
     <div class="row g-4">
         <!-- Columna Izquierda: Itinerario y Pasajeros -->
         <div class="col-lg-7">
@@ -163,7 +152,7 @@
                     </div>
 
                     <div class="alert alert-light border small text-muted p-2 rounded-2 mb-3">
-                        &#128179; <strong>Moneda:</strong> D&oacute;lares de los Estados Unidos de Am&eacute;rica (USD). La transacci&oacute;n se ejecutar&aacute; bajo entorno simulado en el Paso 4.
+                        &#128179; <strong>Moneda:</strong> D&oacute;lares de los Estados Unidos de Am&eacute;rica (USD). La transacci&oacute;n se procesar&aacute; a trav&eacute;s de pasarela de pago seguro en el Paso 4.
                     </div>
 
                     <!-- Botón de Pago -->
@@ -183,23 +172,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        // Temporizador visual demostrativo de retención de asientos
-        var segundosRestantes = 15 * 60;
-        var intervalo = setInterval(function () {
-            segundosRestantes--;
-            if (segundosRestantes <= 0) {
-                clearInterval(intervalo);
-                $("#temporizadorMinutos").text("00:00");
-                alert("El tiempo de retención ha expirado. Por favor reinicie el proceso de reserva.");
-            } else {
-                var m = Math.floor(segundosRestantes / 60);
-                var s = segundosRestantes % 60;
-                var texto = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-                $("#temporizadorMinutos").text(texto);
-            }
-        }, 1000);
-    </script>
-}

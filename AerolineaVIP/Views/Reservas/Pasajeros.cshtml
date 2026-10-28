@@ -68,15 +68,17 @@
                         </div>
 
                         <div class="row g-3">
-                            <!-- Nombres y Apellidos -->
+                            <!-- Nombres y Apellidos (Máx 25 caracteres) -->
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-dark">Nombres Completos *</label>
-                                @Html.TextBoxFor(m => m.Pasajeros[i].Nombres, new { @class = "form-control", placeholder = "Ej: Carlos Roberto", required = "required" })
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Nombres, new { @class = "form-control input-nombres", placeholder = "Ej: Carlos Roberto", maxlength = "25", required = "required" })
+                                <div class="invalid-feedback"></div>
                                 @Html.ValidationMessageFor(m => m.Pasajeros[i].Nombres, "", new { @class = "text-danger small" })
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-dark">Apellidos Completos *</label>
-                                @Html.TextBoxFor(m => m.Pasajeros[i].Apellidos, new { @class = "form-control", placeholder = "Ej: Mendoza Loor", required = "required" })
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Apellidos, new { @class = "form-control input-apellidos", placeholder = "Ej: Mendoza Loor", maxlength = "25", required = "required" })
+                                <div class="invalid-feedback"></div>
                                 @Html.ValidationMessageFor(m => m.Pasajeros[i].Apellidos, "", new { @class = "text-danger small" })
                             </div>
 
@@ -88,18 +90,28 @@
                                     new SelectListItem { Text = "Cédula de Identidad", Value = "CED", Selected = true },
                                     new SelectListItem { Text = "Pasaporte", Value = "PAS" },
                                     new SelectListItem { Text = "RUC", Value = "RUC" }
-                                }, new { @class = "form-select" })
+                                }, new { @class = "form-select select-tipo-doc" })
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label small fw-bold text-dark">N&uacute;mero de Identificaci&oacute;n *</label>
-                                @Html.TextBoxFor(m => m.Pasajeros[i].NumeroDocumento, new { @class = "form-control", placeholder = "Ej: 1719283746", required = "required" })
+                                @Html.TextBoxFor(m => m.Pasajeros[i].NumeroDocumento, new { @class = "form-control input-documento", placeholder = "Ej: 1719283746", maxlength = "10", required = "required" })
+                                <div class="invalid-feedback"></div>
                                 @Html.ValidationMessageFor(m => m.Pasajeros[i].NumeroDocumento, "", new { @class = "text-danger small" })
                             </div>
 
                             <!-- Fecha de Nacimiento y Género -->
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">Fecha de Nacimiento *</label>
-                                @Html.TextBoxFor(m => m.Pasajeros[i].FechaNacimiento, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", required = "required" })
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small fw-bold text-dark mb-0">Fecha de Nacimiento *</label>
+                                    <span class="badge bg-light text-dark border badge-edad-pax" style="font-size: 11px;">Categoría</span>
+                                </div>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].FechaNacimiento, "{0:yyyy-MM-dd}", new {
+                                    @class = "form-control input-fecha-nac",
+                                    type = "date",
+                                    max = DateTime.Today.ToString("yyyy-MM-dd"),
+                                    required = "required"
+                                })
+                                <div class="invalid-feedback"></div>
                                 @Html.ValidationMessageFor(m => m.Pasajeros[i].FechaNacimiento, "", new { @class = "text-danger small" })
                             </div>
                             <div class="col-md-6">
@@ -114,20 +126,22 @@
 
                             <!-- Contacto -->
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">Tel&eacute;fono de Contacto *</label>
-                                @Html.TextBoxFor(m => m.Pasajeros[i].Telefono, new { @class = "form-control", placeholder = "Ej: 0991234567", required = "required" })
+                                <label class="form-label small fw-bold text-dark">Tel&eacute;fono de Contacto (Celular Ecuador) *</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Telefono, new { @class = "form-control input-telefono", placeholder = "Ej: 0991234567", maxlength = "10", required = "required" })
+                                <div class="invalid-feedback"></div>
                                 @Html.ValidationMessageFor(m => m.Pasajeros[i].Telefono, "", new { @class = "text-danger small" })
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-dark">Correo Electr&oacute;nico *</label>
-                                @Html.TextBoxFor(m => m.Pasajeros[i].Email, new { @class = "form-control", type = "email", placeholder = "correo@ejemplo.com", required = "required" })
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Email, new { @class = "form-control input-email", type = "email", placeholder = "correo@ejemplo.com", maxlength = "100", required = "required" })
+                                <div class="invalid-feedback"></div>
                                 @Html.ValidationMessageFor(m => m.Pasajeros[i].Email, "", new { @class = "text-danger small" })
                             </div>
 
                             <!-- Requerimientos Especiales -->
                             <div class="col-12">
                                 <label class="form-label small fw-bold text-dark">Requerimiento Especial o Preferencia VIP (Opcional)</label>
-                                @Html.TextBoxFor(m => m.Pasajeros[i].RequerimientoEspecial, new { @class = "form-control", placeholder = "Ej: Asistencia de movilidad, dieta vegetariana, copa de champagne de bienvenida" })
+                                @Html.TextBoxFor(m => m.Pasajeros[i].RequerimientoEspecial, new { @class = "form-control input-requerimiento", placeholder = "Ej: Asistencia de movilidad, dieta vegetariana, copa de champagne de bienvenida", maxlength = "250" })
                             </div>
                         </div>
                     </div>
@@ -172,7 +186,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-avianca-primary w-100 py-3 fw-bold">
+                        <button type="submit" class="btn btn-avianca-primary w-100 py-3 fw-bold" id="btnContinuarResumen">
                             Revisar Reserva y Tarifas (Paso 3) &rarr;
                         </button>
                     </div>
@@ -181,3 +195,223 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script src="~/Scripts/validaciones-ecuador.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 1. Normalización y validación de Nombres (máx 25)
+            $(".input-nombres").on("input", function () {
+                var val = $(this).val().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\']/g, '');
+                if (val.length > 25) val = val.substring(0, 25);
+                $(this).val(val);
+                validarCampoNombre($(this), "nombres");
+            }).on("blur", function () {
+                var normalizado = ValidadorEcuadorJS.normalizarNombrePropio($(this).val());
+                $(this).val(normalizado);
+                validarCampoNombre($(this), "nombres");
+            });
+
+            // 2. Normalización y validación de Apellidos (máx 25)
+            $(".input-apellidos").on("input", function () {
+                var val = $(this).val().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\']/g, '');
+                if (val.length > 25) val = val.substring(0, 25);
+                $(this).val(val);
+                validarCampoNombre($(this), "apellidos");
+            }).on("blur", function () {
+                var normalizado = ValidadorEcuadorJS.normalizarNombrePropio($(this).val());
+                $(this).val(normalizado);
+                validarCampoNombre($(this), "apellidos");
+            });
+
+            function validarCampoNombre($input, campo) {
+                var res = ValidadorEcuadorJS.validarNombreApellido($input.val(), campo);
+                if (res.valido) {
+                    ValidadorEcuadorJS.marcarValido($input);
+                } else {
+                    ValidadorEcuadorJS.marcarInvalido($input, res.mensaje);
+                }
+                return res.valido;
+            }
+
+            // 3. Cambio dinámico de Tipo de Documento
+            $(".select-tipo-doc").on("change", function () {
+                var tipo = $(this).val();
+                var $docInput = $(this).closest(".row").find(".input-documento");
+
+                ValidadorEcuadorJS.limpiarEstado($docInput);
+                if (tipo === "CED") {
+                    $docInput.attr("maxlength", "10").attr("placeholder", "Ej: 1719283746");
+                } else if (tipo === "RUC") {
+                    $docInput.attr("maxlength", "13").attr("placeholder", "Ej: 1719283746001");
+                } else if (tipo === "PAS") {
+                    $docInput.attr("maxlength", "15").attr("placeholder", "Ej: A12345678");
+                }
+                validarDocumento($docInput);
+            });
+
+            // 4. Validación en tiempo real del Documento
+            $(".input-documento").on("input", function () {
+                var $select = $(this).closest(".row").find(".select-tipo-doc");
+                var tipo = $select.val();
+
+                if (tipo === "CED" || tipo === "RUC") {
+                    var soloNum = $(this).val().replace(/\D/g, '');
+                    var max = tipo === "CED" ? 10 : 13;
+                    if (soloNum.length > max) soloNum = soloNum.substring(0, max);
+                    $(this).val(soloNum);
+                } else {
+                    var alfa = $(this).val().toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    if (alfa.length > 15) alfa = alfa.substring(0, 15);
+                    $(this).val(alfa);
+                }
+
+                validarDocumento($(this));
+            }).on("blur", function () {
+                validarDocumento($(this));
+            });
+
+            function validarDocumento($input) {
+                var tipo = $input.closest(".row").find(".select-tipo-doc").val();
+                var val = $input.val();
+                var res = { valido: false, mensaje: "" };
+
+                if (tipo === "CED") {
+                    res = ValidadorEcuadorJS.validarCedula(val);
+                } else if (tipo === "RUC") {
+                    res = ValidadorEcuadorJS.validarRuc(val);
+                } else if (tipo === "PAS") {
+                    res = ValidadorEcuadorJS.validarPasaporte(val);
+                }
+
+                if (res.valido) {
+                    ValidadorEcuadorJS.marcarValido($input, res.mensaje);
+                } else {
+                    ValidadorEcuadorJS.marcarInvalido($input, res.mensaje);
+                }
+                return res.valido;
+            }
+
+            // 5. Fecha de Nacimiento y Categoría de Edad Aeronáutica (0-10, 11-17, 18+)
+            $(".input-fecha-nac").on("change blur input", function () {
+                validarFechaNac($(this));
+            });
+
+            function validarFechaNac($input) {
+                var val = $input.val();
+                var res = ValidadorEcuadorJS.validarFechaNacimiento(val);
+                var $badge = $input.closest(".col-md-6").find(".badge-edad-pax");
+
+                if (res.valido) {
+                    ValidadorEcuadorJS.marcarValido($input);
+                    $badge.removeClass("bg-light text-dark bg-info bg-warning bg-success bg-danger text-white")
+                          .addClass(res.badgeColor)
+                          .text(res.categoria);
+                } else {
+                    ValidadorEcuadorJS.marcarInvalido($input, res.mensaje);
+                    $badge.removeClass("bg-info bg-warning bg-success text-white")
+                          .addClass("bg-light text-dark border")
+                          .text("Fecha inválida");
+                }
+                return res.valido;
+            }
+
+            // 6. Teléfono Celular Ecuador (10 dígitos iniciado en 09)
+            $(".input-telefono").on("input", function () {
+                var soloNum = $(this).val().replace(/\D/g, '');
+                if (soloNum.length > 10) soloNum = soloNum.substring(0, 10);
+                $(this).val(soloNum);
+                validarTelefono($(this));
+            }).on("blur", function () {
+                validarTelefono($(this));
+            });
+
+            function validarTelefono($input) {
+                var res = ValidadorEcuadorJS.validarTelefonoEcuador($input.val());
+                if (res.valido) {
+                    ValidadorEcuadorJS.marcarValido($input, res.mensaje);
+                } else {
+                    ValidadorEcuadorJS.marcarInvalido($input, res.mensaje);
+                }
+                return res.valido;
+            }
+
+            // 7. Correo Electrónico (sin espacios ni caracteres especiales)
+            $(".input-email").on("input", function () {
+                var limpio = $(this).val().toLowerCase().replace(/\s/g, '');
+                $(this).val(limpio);
+                validarEmailInput($(this));
+            }).on("blur", function () {
+                var limpio = ValidadorEcuadorJS.normalizarEmail($(this).val());
+                $(this).val(limpio);
+                validarEmailInput($(this));
+            });
+
+            function validarEmailInput($input) {
+                var res = ValidadorEcuadorJS.validarEmail($input.val());
+                if (res.valido) {
+                    ValidadorEcuadorJS.marcarValido($input);
+                } else {
+                    ValidadorEcuadorJS.marcarInvalido($input, res.mensaje);
+                }
+                return res.valido;
+            }
+
+            // Validación al Enviar Formulario
+            $("#formPasajeros").on("submit", function (e) {
+                var todoValido = true;
+                var $primerInvalido = null;
+
+                $(".input-nombres").each(function () {
+                    if (!validarCampoNombre($(this), "nombres")) {
+                        todoValido = false;
+                        if (!$primerInvalido) $primerInvalido = $(this);
+                    }
+                });
+
+                $(".input-apellidos").each(function () {
+                    if (!validarCampoNombre($(this), "apellidos")) {
+                        todoValido = false;
+                        if (!$primerInvalido) $primerInvalido = $(this);
+                    }
+                });
+
+                $(".input-documento").each(function () {
+                    if (!validarDocumento($(this))) {
+                        todoValido = false;
+                        if (!$primerInvalido) $primerInvalido = $(this);
+                    }
+                });
+
+                $(".input-fecha-nac").each(function () {
+                    if (!validarFechaNac($(this))) {
+                        todoValido = false;
+                        if (!$primerInvalido) $primerInvalido = $(this);
+                    }
+                });
+
+                $(".input-telefono").each(function () {
+                    if (!validarTelefono($(this))) {
+                        todoValido = false;
+                        if (!$primerInvalido) $primerInvalido = $(this);
+                    }
+                });
+
+                $(".input-email").each(function () {
+                    if (!validarEmailInput($(this))) {
+                        todoValido = false;
+                        if (!$primerInvalido) $primerInvalido = $(this);
+                    }
+                });
+
+                if (!todoValido) {
+                    e.preventDefault();
+                    if ($primerInvalido) {
+                        $('html, body').animate({ scrollTop: $primerInvalido.offset().top - 120 }, 300);
+                        $primerInvalido.focus();
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -178,6 +178,85 @@ namespace AerolineaVIP.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Pasajeros(RegistroPasajerosViewModel model)
         {
+            if (model.Pasajeros == null || !model.Pasajeros.Any())
+            {
+                ModelState.AddModelError("", "Debe registrar al menos un pasajero.");
+                return View(model);
+            }
+
+            // Normalización de entradas y validación rigurosa en el contexto ecuatoriano
+            for (int i = 0; i < model.Pasajeros.Count; i++)
+            {
+                var p = model.Pasajeros[i];
+
+                // 1. Normalización integral de entradas (trim, colapso de espacios intermedios, title case, email en minúsculas)
+                p.Nombres = ValidadorEcuador.NormalizarNombrePropio(p.Nombres);
+                p.Apellidos = ValidadorEcuador.NormalizarNombrePropio(p.Apellidos);
+                p.NumeroDocumento = ValidadorEcuador.NormalizarDocumento(p.NumeroDocumento);
+                p.Telefono = ValidadorEcuador.NormalizarTelefono(p.Telefono);
+                p.Email = ValidadorEcuador.NormalizarEmail(p.Email);
+                p.RequerimientoEspecial = ValidadorEcuador.NormalizarEspacios(p.RequerimientoEspecial);
+
+                // 2. Validación de Nombres (máximo 25 caracteres, solo letras hispanas)
+                if (!ValidadorEcuador.ValidarNombreApellido(p.Nombres, 25))
+                {
+                    ModelState.AddModelError($"Pasajeros[{i}].Nombres", $"Los nombres del Pasajero {i + 1} deben contener solo letras y no superar los 25 caracteres.");
+                }
+
+                // 3. Validación de Apellidos (máximo 25 caracteres, solo letras hispanas)
+                if (!ValidadorEcuador.ValidarNombreApellido(p.Apellidos, 25))
+                {
+                    ModelState.AddModelError($"Pasajeros[{i}].Apellidos", $"Los apellidos del Pasajero {i + 1} deben contener solo letras y no superar los 25 caracteres.");
+                }
+
+                // 4. Validación de Documento de Identidad según tipo seleccionado
+                if (p.TipoDocumento == "CED")
+                {
+                    if (!ValidadorEcuador.ValidarCedula(p.NumeroDocumento))
+                    {
+                        ModelState.AddModelError($"Pasajeros[{i}].NumeroDocumento", $"La cédula ecuatoriana del Pasajero {i + 1} no es válida según el Registro Civil (debe tener 10 dígitos, provincia 01-24 y cumplir Módulo 10).");
+                    }
+                }
+                else if (p.TipoDocumento == "RUC")
+                {
+                    if (!ValidadorEcuador.ValidarRuc(p.NumeroDocumento))
+                    {
+                        ModelState.AddModelError($"Pasajeros[{i}].NumeroDocumento", $"El RUC del Pasajero {i + 1} debe contener 13 dígitos y terminar en un código de establecimiento válido.");
+                    }
+                }
+                else if (p.TipoDocumento == "PAS")
+                {
+                    if (!ValidadorEcuador.ValidarPasaporte(p.NumeroDocumento))
+                    {
+                        ModelState.AddModelError($"Pasajeros[{i}].NumeroDocumento", $"El pasaporte del Pasajero {i + 1} debe ser alfanumérico entre 6 y 15 caracteres sin espacios.");
+                    }
+                }
+
+                // 5. Validación de Fecha de Nacimiento y Categoría Aeronáutica (Infante 0-10, Menor 11-17, Adulto 18+)
+                string errFecha;
+                string categoriaEdad;
+                if (!ValidadorEcuador.ValidarFechaNacimiento(p.FechaNacimiento, out errFecha, out categoriaEdad))
+                {
+                    ModelState.AddModelError($"Pasajeros[{i}].FechaNacimiento", $"Pasajero {i + 1}: {errFecha}");
+                }
+                else
+                {
+                    p.CategoriaEdad = categoriaEdad;
+                }
+
+                // 6. Validación de Celular Ecuatoriano (10 dígitos iniciado en 09)
+                if (!ValidadorEcuador.ValidarTelefonoEcuador(p.Telefono))
+                {
+                    ModelState.AddModelError($"Pasajeros[{i}].Telefono", $"El teléfono del Pasajero {i + 1} debe ser un celular ecuatoriano de 10 dígitos iniciado en 09 (ej: 0991234567).");
+                }
+
+                // 7. Validación de Correo Electrónico (sin espacios ni caracteres especiales)
+                if (!ValidadorEcuador.ValidarEmail(p.Email))
+                {
+                    ModelState.AddModelError($"Pasajeros[{i}].Email", $"Ingrese un correo electrónico válido para el Pasajero {i + 1} (sin espacios ni caracteres prohibidos).");
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -318,6 +397,39 @@ namespace AerolineaVIP.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult ProcesarPago(PagoSimuladoViewModel model)
         {
+            // 1. Normalización de entradas de pago
+            model.TitularTarjeta = ValidadorEcuador.NormalizarEspacios(model.TitularTarjeta).ToUpperInvariant();
+            string numTarjetaSoloDigitos = System.Text.RegularExpressions.Regex.Replace(model.NumeroTarjeta ?? "", @"\D", "");
+            model.Cvv = (model.Cvv ?? "").Trim();
+
+            // 2. Validación del Titular (mínimo 2 palabras, solo letras)
+            if (!ValidadorEcuador.ValidarTitularTarjeta(model.TitularTarjeta))
+            {
+                ModelState.AddModelError("TitularTarjeta", "Ingrese el nombre y apellido completos como figura en la tarjeta (solo letras y mínimo dos palabras).");
+            }
+
+            // 3. Validación de la Tarjeta flexibilizada según dígitos mínimos requeridos
+            if (!ValidadorEcuador.ValidarTarjetaDigitosMinimos(numTarjetaSoloDigitos, model.MarcaTarjeta))
+            {
+                int min = model.MarcaTarjeta == "DINERS" ? 14 : 15;
+                ModelState.AddModelError("NumeroTarjeta", $"El número de tarjeta debe tener al menos {min} dígitos numéricos.");
+            }
+
+            // 4. Validación de Expiración
+            if (!ValidadorEcuador.ValidarVencimientoTarjeta(model.MesExpiracion, model.AnioExpiracion))
+            {
+                ModelState.AddModelError("MesExpiracion", "La tarjeta seleccionada se encuentra vencida.");
+            }
+
+            // 5. Validación de CVV según marca
+            if (!ValidadorEcuador.ValidarCvv(model.Cvv, model.MarcaTarjeta))
+            {
+                string msgCvv = model.MarcaTarjeta == "AMEX"
+                    ? "El código de seguridad CVV debe tener 4 dígitos para American Express."
+                    : "El código de seguridad CVV debe tener 3 dígitos.";
+                ModelState.AddModelError("Cvv", msgCvv);
+            }
+
             if (!ModelState.IsValid)
             {
                 return View("Pagar", model);
@@ -325,7 +437,7 @@ namespace AerolineaVIP.Controllers
 
             var random = new Random();
             string codigoReserva = "VIP-" + random.Next(10000, 99999);
-            string codigoOperacion = "SIM-" + random.Next(100000, 999999);
+            string codigoOperacion = "AUT-" + random.Next(100000, 999999);
 
             return RedirectToAction("Exito", new
             {
@@ -333,7 +445,7 @@ namespace AerolineaVIP.Controllers
                 codigoOperacion = codigoOperacion,
                 vueloId = model.VueloId,
                 marca = model.MarcaTarjeta,
-                ultimos4 = model.NumeroTarjeta?.Length >= 4 ? model.NumeroTarjeta.Substring(model.NumeroTarjeta.Length - 4) : "9010",
+                ultimos4 = numTarjetaSoloDigitos.Length >= 4 ? numTarjetaSoloDigitos.Substring(numTarjetaSoloDigitos.Length - 4) : "9010",
                 titular = model.TitularTarjeta
             });
         }
@@ -342,7 +454,7 @@ namespace AerolineaVIP.Controllers
         // PANTALLA 12: CONFIRMACIÓN DE COMPRA EXITOSA Y PASES DE ABORDAR
         // =========================================================================
         [HttpGet]
-        public ActionResult Exito(string codigoReserva = "VIP-78492", string codigoOperacion = "SIM-582910", int vueloId = 1, string marca = "VISA", string ultimos4 = "9010", string titular = "CARLOS ROBERTO MENDOZA")
+        public ActionResult Exito(string codigoReserva = "VIP-78492", string codigoOperacion = "AUT-582910", int vueloId = 1, string marca = "VISA", string ultimos4 = "9010", string titular = "CARLOS ROBERTO MENDOZA")
         {
             var vuelo = ObtenerVueloConDetalle(vueloId);
             var resumen = Session["ReservaActual_Resumen"] as ResumenReservaViewModel;

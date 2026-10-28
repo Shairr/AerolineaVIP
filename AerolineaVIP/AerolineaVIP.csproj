@@ -185,6 +185,7 @@
     <Compile Include="Models\RolesInicializador.cs" />
     <Compile Include="Models\VuelosViewModels.cs" />
     <Compile Include="Models\EmbudoViewModels.cs" />
+    <Compile Include="Models\ValidadorEcuador.cs" />
     <Compile Include="Models\AerolineaVIP.Context.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -446,6 +447,7 @@
     <Content Include="Scripts\bootstrap.bundle.js.map" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
+    <Content Include="Scripts\validaciones-ecuador.js" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
