@@ -1,0 +1,278 @@
+﻿@model AerolineaVIP.Models.ResultadoBusquedaViewModel
+@{
+    ViewBag.Title = "Resultados de Vuelos";
+}
+
+<!-- ==========================================================================
+     PANTALLA 6: RESULTADOS DE BÚSQUEDA DE VUELOS (Requisito 10 de PLAN.md)
+     ========================================================================== -->
+<div class="py-4">
+    <!-- Barra Superior de Resumen de Itinerario -->
+    <div class="card card-avianca p-3 p-md-4 shadow-1 border mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <span class="badge bg-danger text-white rounded-pill px-3 py-1 mb-1">
+                    @(Model.Criterios.TipoViaje == "ida-vuelta" ? "Ida y Vuelta" : "Solo Ida")
+                </span>
+                <h1 class="h3 fw-bold mb-1 text-dark">
+                    @Model.Criterios.OrigenCodigo &rarr; @Model.Criterios.DestinoCodigo
+                </h1>
+                <p class="text-secondary small mb-0">
+                    @(Model.Criterios.FechaSalida.HasValue ? Model.Criterios.FechaSalida.Value.ToString("dddd, dd MMMM yyyy") : "Fechas disponibles")
+                    &bull; @Model.Criterios.CantidadPasajeros Pasajero@(Model.Criterios.CantidadPasajeros > 1 ? "s" : "")
+                </p>
+            </div>
+
+            <div>
+                <a href="@Url.Action("Buscar", "Vuelos", new { 
+                    origen = Model.Criterios.OrigenCodigo, 
+                    destino = Model.Criterios.DestinoCodigo, 
+                    fechaSalida = Model.Criterios.FechaSalida.HasValue ? Model.Criterios.FechaSalida.Value.ToString("yyyy-MM-dd") : null,
+                    pasajeros = Model.Criterios.CantidadPasajeros,
+                    tipoViaje = Model.Criterios.TipoViaje 
+                })" class="btn btn-avianca-outline-sm">
+                    &#9998; Modificar B&uacute;squeda
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (!Request.IsAuthenticated)
+    {
+        <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4 d-flex flex-wrap align-items-center justify-content-between p-3" style="background-color: #E8F4FD; border-left: 4px solid #0B5CAD !important;">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-info-circle-fill text-primary fs-3"></i>
+                <div>
+                    <strong class="text-dark">BÃºsqueda libre de itinerarios y vuelos ejecutivos.</strong>
+                    <div class="small text-muted">Cualquier usuario puede consultar horarios y tarifas. Para seleccionar asientos y reservar se le solicitarÃ¡ iniciar sesiÃ³n con su cuenta.</div>
+                </div>
+            </div>
+            <div class="mt-2 mt-md-0">
+                <a href="@Url.Action("Login", "Account", new { returnUrl = Request.RawUrl })" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar SesiÃ³n
+                </a>
+            </div>
+        </div>
+    }
+    <!-- Alerta Informativa (si no había vuelos en la fecha exacta o sugerencia) -->
+    @if (!string.IsNullOrEmpty(Model.MensajeInformativo))
+    {
+        <div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm mb-4" role="alert">
+            <span class="fs-4">&#9888;</span>
+            <div class="small">
+                <strong>Aviso de operaciones:</strong> @Model.MensajeInformativo
+            </div>
+        </div>
+    }
+
+    <!-- Selector / Carrusel Semanal de Tarifas Reales (DESIGN.md 6.5) -->
+    @if (Model.CalendarioSemanal != null && Model.CalendarioSemanal.Any())
+    {
+        <div class="mb-4">
+            <h6 class="text-muted fw-bold text-uppercase small mb-2">Tarifas de la semana en la BD:</h6>
+            <div class="d-flex gap-2 overflow-auto pb-2">
+                @foreach (var dia in Model.CalendarioSemanal)
+                {
+                    <a href="@Url.Action("Resultados", "Vuelos", new { 
+                        origen = Model.Criterios.OrigenCodigo, 
+                        destino = Model.Criterios.DestinoCodigo, 
+                        fechaSalida = dia.Fecha.ToString("yyyy-MM-dd"),
+                        pasajeros = Model.Criterios.CantidadPasajeros,
+                        tipoViaje = Model.Criterios.TipoViaje
+                    })" class="text-decoration-none flex-fill" style="min-width: 120px;">
+                        <div class="card text-center p-2 border @(dia.EsSeleccionado ? "border-danger bg-light shadow-sm" : "")" 
+                             style="border-radius: var(--radius-md);">
+                            <span class="d-block fw-bold text-dark small">@dia.DiaSemanaCorto, @dia.FechaCorta</span>
+                            @if (dia.TieneVuelos && dia.PrecioMinimo.HasValue)
+                            {
+                                <span class="d-block fw-bold text-danger small mt-1">
+                                    USD @dia.PrecioMinimo.Value.ToString("N0")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="d-block text-muted small mt-1">Sin vuelos</span>
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Listado de Tarjetas de Vuelos Reales -->
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 fw-bold text-dark mb-0">
+                Vuelos disponibles (@Model.Vuelos.Count encontrados)
+            </h2>
+            <span class="small text-muted">Aeronave oficial: Embraer Phenom 300E (7 plazas)</span>
+        </div>
+
+        @if (Model.Vuelos != null && Model.Vuelos.Any())
+        {
+            foreach (var v in Model.Vuelos)
+            {
+                bool hayCupos = v.AsientosDisponibles >= Model.Criterios.CantidadPasajeros;
+
+                <div class="card card-avianca p-4 shadow-1 border mb-4">
+                    <!-- Fila Superior: Datos de Operación y Aeronave -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-3 gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-dark text-white rounded-pill px-3 py-1">
+                                Vuelo #@v.VueloId
+                            </span>
+                            <span class="fw-bold text-dark small">
+                                &#9992; @v.AeronaveMatricula &bull; @v.ModeloAeronave
+                            </span>
+                            <span class="badge @(v.EstadoVueloCodigo == "CONFIRMADO" ? "bg-success" : "bg-primary") text-white">
+                                @v.EstadoVueloCodigo
+                            </span>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = v.VueloId })" 
+                               class="btn btn-outline-secondary btn-sm py-1 px-3" 
+                               title="Ver mapa de asientos del Phenom 300E en solo lectura">
+                                &#128186; Ver Cabina (P7)
+                            </a>
+
+                            @if (hayCupos)
+                            {
+                                <span class="badge bg-success text-white py-1 px-3">
+                                    &#10003; @v.AsientosDisponibles asiento@(v.AsientosDisponibles > 1 ? "s" : "") disponible@(v.AsientosDisponibles > 1 ? "s" : "")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark py-1 px-3">
+                                    &#9888; Solo @v.AsientosDisponibles asiento@(v.AsientosDisponibles > 1 ? "s" : "") (Requiere @Model.Criterios.CantidadPasajeros)
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Fila Central: Itinerario con Horarios y Trayecto (DESIGN.md Sección 6.5) -->
+                    <div class="row align-items-center text-center my-3 gy-3">
+                        <!-- Salida -->
+                        <div class="col-md-3 text-md-start">
+                            <span class="h3 fw-bold text-dark d-block mb-0">
+                                @DateTime.Today.Add(v.HoraSalida).ToString("HH:mm")
+                            </span>
+                            <span class="badge bg-light text-dark border fw-bold">@v.OrigenCodigo</span>
+                            <span class="small text-secondary d-block mt-1">@v.OrigenCiudad</span>
+                            <span class="text-muted" style="font-size: 11px;">@v.FechaOperacion.ToString("dd MMM yyyy")</span>
+                        </div>
+
+                        <!-- Línea de Trayecto y Duración -->
+                        <div class="col-md-6">
+                            <span class="small text-muted d-block mb-1">
+                                &#9201; Duraci&oacute;n: @v.DuracionTexto
+                            </span>
+                            <div class="d-flex align-items-center justify-content-center px-4">
+                                <span class="rounded-circle bg-danger" style="width: 8px; height: 8px;"></span>
+                                <div class="flex-grow-1 border-top border-2 border-danger mx-2"></div>
+                                <span class="fs-6 text-danger">&#9992;</span>
+                                <div class="flex-grow-1 border-top border-2 border-danger mx-2"></div>
+                                <span class="rounded-circle bg-danger" style="width: 8px; height: 8px;"></span>
+                            </div>
+                            <span class="small text-muted d-block mt-1">
+                                @(v.EsVueloDirecto ? "Vuelo Directo Ejecutivo" : v.EscalaInfo)
+                            </span>
+                        </div>
+
+                        <!-- Llegada -->
+                        <div class="col-md-3 text-md-end">
+                            <span class="h3 fw-bold text-dark d-block mb-0">
+                                @DateTime.Today.Add(v.HoraLlegada).ToString("HH:mm")
+                            </span>
+                            <span class="badge bg-light text-dark border fw-bold">@v.DestinoCodigo</span>
+                            <span class="small text-secondary d-block mt-1">@v.DestinoCiudad</span>
+                            <span class="text-muted" style="font-size: 11px;">@v.FechaOperacion.ToString("dd MMM yyyy")</span>
+                        </div>
+                    </div>
+
+                    <!-- Fila Inferior: Columnas Tarifarias Classic y Flex -->
+                    <div class="row g-3 pt-3 border-top mt-2">
+                        <!-- Tarifa Classic -->
+                        <div class="col-md-6">
+                            <div class="card p-3 border rounded-3 h-100 bg-white shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="h6 fw-bold mb-0 text-dark">Tarifa Classic</h5>
+                                    <span class="badge bg-light text-dark border">Est&aacute;ndar VIP</span>
+                                </div>
+                                <ul class="small text-secondary ps-3 mb-3">
+                                    <li>Asiento de cuero reclinable</li>
+                                    <li>Equipaje de bodega (23 kg) + mano (10 kg)</li>
+                                    <li>Snack gourmet de cortes&iacute;a</li>
+                                </ul>
+                                <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                                    <div>
+                                        <small class="text-muted d-block">Por pasajero</small>
+                                        <span class="h4 fw-bold text-danger mb-0">
+                                            USD @v.TarifaClassic.ToString("N2")
+                                        </span>
+                                    </div>
+                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Classic", pasajeros = Model.Criterios.CantidadPasajeros })" 
+                                       class="btn btn-avianca-outline-sm @(!hayCupos ? "disabled" : "")">
+                                        Seleccionar Classic &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tarifa Flex -->
+                        <div class="col-md-6">
+                            <div class="card p-3 border-danger rounded-3 h-100 bg-light shadow-sm" style="border-width: 2px;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="h6 fw-bold mb-0 text-danger">Tarifa Executive Flex</h5>
+                                    <span class="badge bg-danger text-white">Recomendada</span>
+                                </div>
+                                <ul class="small text-secondary ps-3 mb-3">
+                                    <li>Todos los beneficios de Tarifa Classic</li>
+                                    <li>Cambios de fecha sin penalidad</li>
+                                    <li>Acceso preferencial a Sala VIP privada</li>
+                                    <li>Embarque prioritario en 15 min</li>
+                                </ul>
+                                <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                                    <div>
+                                        <small class="text-muted d-block">Por pasajero</small>
+                                        <span class="h4 fw-bold text-danger mb-0">
+                                            USD @v.TarifaFlex.ToString("N2")
+                                        </span>
+                                    </div>
+                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Flex", pasajeros = Model.Criterios.CantidadPasajeros })" 
+                                       class="btn btn-avianca-primary-sm @(!hayCupos ? "disabled" : "")">
+                                        Seleccionar Flex &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="card card-avianca p-5 text-center border">
+                <div class="brand-icon-flight mx-auto mb-3" style="width: 56px; height: 56px; font-size: 24px;">
+                    &#9992;
+                </div>
+                <h3 class="h4 fw-bold mb-2">No se encontraron vuelos programados</h3>
+                <p class="text-secondary small max-w-700 mx-auto mb-4">
+                    Actualmente no existen operaciones registradas en la base de datos para la ruta 
+                    <strong>@Model.Criterios.OrigenCodigo &rarr; @Model.Criterios.DestinoCodigo</strong>.
+                    Por favor revisa nuestros destinos autorizados y días de frecuencia confirmados.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-avianca-primary">
+                        Probar otra ruta
+                    </a>
+                    <a href="@Url.Action("Index", "Home")#destinos" class="btn btn-avianca-secondary">
+                        Ver destinos y horarios
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>

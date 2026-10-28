@@ -1,0 +1,156 @@
+﻿@using Microsoft.AspNet.Identity
+
+<header>
+    <nav class="navbar navbar-expand-lg navbar-avianca fixed-top" aria-label="Navegación principal">
+        <div class="container">
+            <!-- Logotipo Corporativo -->
+            <a class="navbar-brand-avianca" href="@Url.Action("Index", "Home", new { area = "" })" title="Aerolínea VIP - Inicio">
+                <span class="brand-icon-flight" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                    </svg>
+                </span>
+                <span>AEROLÍNEA <span class="brand-text-accent">VIP</span></span>
+                <span class="brand-badge-tag">EXECUTIVE</span>
+            </a>
+
+            <!-- Botón Toggler para móviles -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPrincipal"
+                    aria-controls="navbarPrincipal" aria-expanded="false" aria-label="Alternar navegación">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menú de Navegación -->
+            <div class="collapse navbar-collapse justify-content-between" id="navbarPrincipal">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                           href="@Url.Action("Index", "Home", new { area = "" })">
+                            Inicio
+                        </a>
+                    </li>
+
+                    @if (!Request.IsAuthenticated || User.IsInRole("Cliente"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vuelos" ? "active" : "")"
+                               href="@Url.Action("Buscar", "Vuelos", new { area = "" })">
+                                Buscar Vuelos
+                            </a>
+                        </li>
+                    }
+
+                    @if (Request.IsAuthenticated)
+                    {
+                        if (User.IsInRole("Cliente") || User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reservas" && ViewContext.RouteData.Values["action"]?.ToString() == "MisReservas" ? "active" : "")"
+                                   href="@Url.Action("MisReservas", "Reservas", new { area = "" })">
+                                    Mis Reservas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "CheckIn" ? "active" : "")"
+                                   href="@Url.Action("Index", "CheckIn", new { area = "" })">
+                                    Check-in
+                                </a>
+                            </li>
+                        }
+
+                        if (User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                                   href="@Url.Action("Index", "Admin", new { area = "" })">
+                                    Panel Admin
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link-avianca dropdown-toggle" href="#" id="adminDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    Gestión Operativa
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-avianca" aria-labelledby="adminDropdown">
+                                    <li>
+                                        <a class="dropdown-item-avianca" href="@Url.Action("Index", "VuelosAdmin", new { area = "" })">
+                                            Vuelos Programados
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item-avianca" href="@Url.Action("Index", "AeronavesAdmin", new { area = "" })">
+                                            Flota Phenom 300E
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item-avianca" href="@Url.Action("Index", "PasajerosAdmin", new { area = "" })">
+                                            Pasajeros Registrados
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider-avianca" /></li>
+                                    <li>
+                                        <a class="dropdown-item-avianca" href="@Url.Action("Reportes", "Admin", new { area = "" })">
+                                            Reportes Ejecutivos
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                    }
+                </ul>
+
+                <!-- Acciones de Cuenta / Perfil -->
+                <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                    @if (Request.IsAuthenticated)
+                    {
+                        using (Html.BeginForm("LogOff", "Account", new { area = "" }, FormMethod.Post, new { id = "logoutForm", @class = "d-flex align-items-center gap-2 m-0" }))
+                        {
+                            @Html.AntiForgeryToken()
+
+                            if (User.IsInRole("SuperUsuario"))
+                            {
+                                <span class="badge-role badge-role-superusuario">SuperUsuario</span>
+                            }
+                            else if (User.IsInRole("Administrador"))
+                            {
+                                <span class="badge-role badge-role-administrador">Admin</span>
+                            }
+                            else if (User.IsInRole("Cliente"))
+                            {
+                                <span class="badge-role badge-role-cliente">Cliente VIP</span>
+                            }
+
+                            <div class="dropdown">
+                                <button class="btn btn-avianca-outline-sm dropdown-toggle" type="button" id="userMenuBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                     @User.Identity.GetUserName()
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-avianca" aria-labelledby="userMenuBtn">
+                                    <li>
+                                        <a class="dropdown-item-avianca" href="@Url.Action("Index", "Manage", new { area = "" })">
+                                             Mi Cuenta
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider-avianca" /></li>
+                                    <li>
+                                        <a class="dropdown-item-avianca text-danger" href="javascript:document.getElementById('logoutForm').submit();">
+                                             Cerrar Sesión
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Login", "Account", new { area = "" })" class="btn btn-avianca-outline-sm">
+                            Iniciar Sesión
+                        </a>
+                        <a href="@Url.Action("Register", "Account", new { area = "" })" class="btn btn-avianca-primary-sm">
+                            Registrarse
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>

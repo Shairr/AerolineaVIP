@@ -1,0 +1,174 @@
+@model AerolineaVIP.Models.ResumenReservaViewModel
+
+@{
+    ViewBag.Title = "Paso 3: Confirmación de Reserva — " + Model.CodigoPreReserva;
+}
+
+<div class="container py-4">
+    <!-- Stepper de Progreso (Paso 3 Activo) -->
+    @Html.Partial("_PasosReserva", 3)
+
+    <!-- Encabezado de la Pantalla 10 -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 10</span>
+                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 3 de 4</span>
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">Pre-Reserva Generada</span>
+            </div>
+            <h1 class="h2 fw-bold text-dark mb-0">
+                Resumen y Confirmaci&oacute;n de Reserva
+            </h1>
+            <p class="text-secondary small mb-0">
+                Por favor revise cuidadosamente los datos del itinerario, asignaci&oacute;n de asientos y liquidaci&oacute;n fiscal antes de proceder al pago.
+            </p>
+        </div>
+
+        <div class="text-end">
+            <span class="small text-muted d-block">C&oacute;digo Pre-Reserva Temporal:</span>
+            <span class="badge bg-dark fs-6 px-3 py-2 text-uppercase">@Model.CodigoPreReserva</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna Izquierda: Itinerario y Pasajeros -->
+        <div class="col-lg-7">
+            <!-- Tarjeta de Itinerario -->
+            <div class="card card-avianca p-4 shadow-1 mb-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h3 class="h5 fw-bold text-dark mb-0">&#9992; Itinerario de Vuelo Privado</h3>
+                    <span class="badge bg-danger text-white">Tarifa @Model.TarifaSeleccionada</span>
+                </div>
+
+                <div class="row align-items-center gy-3 mb-3">
+                    <div class="col-sm-5">
+                        <span class="small text-muted d-block">Origen</span>
+                        <h4 class="h5 fw-bold text-dark mb-0">@Model.OrigenCiudad (@Model.OrigenCodigo)</h4>
+                        <span class="small text-secondary">Salida: @DateTime.Today.Add(Model.HoraSalida).ToString("HH:mm") hrs</span>
+                    </div>
+                    <div class="col-sm-2 text-center">
+                        <span class="text-danger fs-5">&rarr;</span>
+                    </div>
+                    <div class="col-sm-5 text-sm-end">
+                        <span class="small text-muted d-block">Destino</span>
+                        <h4 class="h5 fw-bold text-dark mb-0">@Model.DestinoCiudad (@Model.DestinoCodigo)</h4>
+                        <span class="small text-secondary">Llegada: @DateTime.Today.Add(Model.HoraLlegada).ToString("HH:mm") hrs</span>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-between small text-muted border-top pt-2">
+                    <span>Fecha: <strong>@Model.FechaOperacion.ToString("dd MMMM yyyy")</strong></span>
+                    <span>Aeronave: <strong>Embraer Phenom 300E (@Model.AeronaveMatricula)</strong></span>
+                    <span>Vuelo: <strong>@Model.CodigoVuelo</strong></span>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Pasajeros Registrados -->
+            <div class="card card-avianca p-4 shadow-1 mb-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h3 class="h5 fw-bold text-dark mb-0">&#128101; Pasajeros Registrados (@Model.Pasajeros.Count)</h3>
+                    <a href="@Url.Action("Pasajeros", "Reservas", new { vueloId = Model.VueloId, asientos = Model.AsientosCodigos, tarifa = Model.TarifaSeleccionada })" 
+                       class="small text-danger text-decoration-none fw-semibold">
+                        &#9998; Modificar datos
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle small mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Pasajero</th>
+                                <th>Identificaci&oacute;n</th>
+                                <th>Asiento</th>
+                                <th>Contacto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Pasajeros)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@p.Indice</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@p.Nombres @p.Apellidos</div>
+                                        @if (!string.IsNullOrWhiteSpace(p.RequerimientoEspecial))
+                                        {
+                                            <span class="badge bg-light text-muted border" style="font-size: 10px;">@p.RequerimientoEspecial</span>
+                                        }
+                                    </td>
+                                    <td>@p.TipoDocumento: @p.NumeroDocumento</td>
+                                    <td>
+                                        <span class="badge bg-danger rounded-pill px-2 py-1 fs-6">
+                                            &#128186; @p.AsientoAsignado
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div>@p.Telefono</div>
+                                        <div class="text-muted" style="font-size: 11px;">@p.Email</div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Liquidación Fiscal y Botón de Pago -->
+        <div class="col-lg-5">
+            <div class="resumen-vuelo-sticky">
+                <div class="card card-avianca p-4 shadow-2 border">
+                    <h4 class="h5 fw-bold border-bottom pb-2 mb-3 text-dark">
+                        Liquidaci&oacute;n Fiscal de la Reserva
+                    </h4>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-borderless small mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="text-secondary">Tarifa Base (@Model.CantidadPasajeros pax &times; USD @Model.PrecioUnitario.ToString("N2")):</td>
+                                    <td class="text-end fw-semibold">USD @Model.TarifaBaseTotal.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Tasas de Seguridad y Aeroportuarias:</td>
+                                    <td class="text-end fw-semibold">USD @Model.TasasAeroportuarias.ToString("N2")</td>
+                                </tr>
+                                <tr class="border-top">
+                                    <td class="text-dark fw-bold pt-2">Subtotal Neto Gravable:</td>
+                                    <td class="text-end fw-bold text-dark pt-2">USD @Model.SubtotalNeto.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">IVA Ecuador (15%):</td>
+                                    <td class="text-end fw-semibold text-danger">+ USD @Model.IvaMonto.ToString("N2")</td>
+                                </tr>
+                                <tr class="border-top">
+                                    <td class="h5 fw-bold text-dark pt-2">Importe Total a Pagar:</td>
+                                    <td class="h4 fw-bold text-danger text-end pt-2">
+                                        USD @Model.TotalPagar.ToString("N2")
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-light border small text-muted p-2 rounded-2 mb-3">
+                        &#128179; <strong>Moneda:</strong> D&oacute;lares de los Estados Unidos de Am&eacute;rica (USD). La transacci&oacute;n se procesar&aacute; a trav&eacute;s de pasarela de pago seguro en el Paso 4.
+                    </div>
+
+                    <!-- Botón de Pago -->
+                    <a href="@Url.Action("Pagar", "Reservas", new { codigoPreReserva = Model.CodigoPreReserva, vueloId = Model.VueloId, tarifa = Model.TarifaSeleccionada })" 
+                       class="btn btn-avianca-primary w-100 py-3 fw-bold fs-6">
+                        Proceder al Pago Seguro (Paso 4) &rarr;
+                    </a>
+
+                    <div class="text-center mt-3">
+                        <a href="@Url.Action("Pasajeros", "Reservas", new { vueloId = Model.VueloId, asientos = Model.AsientosCodigos, tarifa = Model.TarifaSeleccionada })" 
+                           class="small text-secondary text-decoration-none">
+                            &larr; Volver y modificar pasajeros
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

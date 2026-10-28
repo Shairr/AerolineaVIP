@@ -1,6 +1,13 @@
-﻿.vs/
+## Visual Studio y ASP.NET Framework
+.vs/
 [Bb]in/
 [Oo]bj/
 packages/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+
+## Documentacion ignorada
+PLAN.md
+DESIGN.md

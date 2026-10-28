@@ -1,0 +1,187 @@
+@model AerolineaVIP.Models.DisponibilidadVueloViewModel
+
+@{
+    ViewBag.Title = "Disponibilidad y Mapa de Cabina — Vuelo " + Model.CodigoVuelo;
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb de Navegación -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("Buscar", "Vuelos")">B&uacute;squeda de Vuelos</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Disponibilidad Vuelo @Model.CodigoVuelo</li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado de la Pantalla 7 -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 7</span>
+                <span class="badge bg-dark rounded-pill px-3 py-1">Solo Lectura</span>
+                <span class="small text-muted">Aeronave Oficial: @Model.ModeloAeronave</span>
+            </div>
+            <h1 class="h2 fw-bold text-dark mb-0">
+                Disponibilidad y Mapa de Cabina
+            </h1>
+            <p class="text-secondary small mb-0">
+                Consulte la ocupaci&oacute;n y distribuci&oacute;n de los 7 asientos del avi&oacute;n ejecutivo para esta operaci&oacute;n.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Resultados", "Vuelos", new { origen = Model.OrigenCodigo, destino = Model.DestinoCodigo })" 
+               class="btn btn-outline-secondary btn-sm">
+                &larr; Volver a resultados
+            </a>
+            @if (Model.AsientosDisponibles > 0)
+            {
+                <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = Model.VueloId, tarifa = "Classic", pasajeros = 1 })" 
+                   class="btn btn-avianca-primary btn-sm">
+                    Reservar en este vuelo &rarr;
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Ficha Técnica Resumen de Vuelo -->
+    <div class="card card-avianca p-4 shadow-1 mb-4">
+        <div class="row align-items-center gy-3">
+            <div class="col-md-3">
+                <span class="badge bg-danger text-white mb-1">Vuelo @Model.CodigoVuelo</span>
+                <h3 class="h4 fw-bold text-dark mb-0">@Model.OrigenCiudad &rarr; @Model.DestinoCiudad</h3>
+                <span class="small text-muted">@Model.DiaSemanaNombre, @Model.FechaOperacion.ToString("dd MMMM yyyy")</span>
+            </div>
+
+            <div class="col-md-6 text-center">
+                <div class="row align-items-center">
+                    <div class="col-5 text-end">
+                        <span class="h4 fw-bold text-dark d-block mb-0">@DateTime.Today.Add(Model.HoraSalida).ToString("HH:mm")</span>
+                        <span class="badge bg-light text-dark border">@Model.OrigenCodigo</span>
+                        <span class="small text-muted d-block mt-1">@Model.OrigenNombre</span>
+                    </div>
+                    <div class="col-2 text-center">
+                        <span class="text-danger fs-5">&#9992;</span>
+                        <span class="small text-muted d-block" style="font-size: 11px;">@Model.DuracionTexto</span>
+                    </div>
+                    <div class="col-5 text-start">
+                        <span class="h4 fw-bold text-dark d-block mb-0">@DateTime.Today.Add(Model.HoraLlegada).ToString("HH:mm")</span>
+                        <span class="badge bg-light text-dark border">@Model.DestinoCodigo</span>
+                        <span class="small text-muted d-block mt-1">@Model.DestinoNombre</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 text-md-end border-start">
+                <div class="small text-muted">Estado del vuelo:</div>
+                <span class="badge @(Model.EstadoVueloCodigo == "CONFIRMADO" ? "bg-success" : "bg-primary") text-white mb-2">
+                    @Model.EstadoVueloCodigo
+                </span>
+                <div>
+                    <span class="small text-muted">Tarifa de referencia:</span>
+                    <h4 class="h5 fw-bold text-danger mb-0">USD @Model.TarifaClassic.ToString("N2")</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal: Mapa de Cabina (Columna Izq) + Ficha de Ocupación y Servicios (Columna Der) -->
+    <div class="row g-4">
+        <!-- Columna Izquierda: Mapa de Asientos -->
+        <div class="col-lg-6">
+            <div class="card card-avianca p-4 shadow-1 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h5 fw-bold text-dark mb-0">Distribuci&oacute;n de Cabina (Phenom 300E)</h3>
+                    <span class="badge bg-light text-dark border">Plazas: 7</span>
+                </div>
+                <p class="small text-secondary mb-3">
+                    Mapa de asientos interactivo en modo <strong>solo lectura</strong>. Los colores reflejan el inventario real en tiempo de ejecuci&oacute;n.
+                </p>
+
+                <!-- Vista Parcial Reutilizable _MapaAsientos -->
+                @Html.Partial("_MapaAsientos", Model.MapaCabina)
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Balance de Ocupación y Características Ejecutivas -->
+        <div class="col-lg-6">
+            <!-- Balance de Asientos -->
+            <div class="card card-avianca p-4 shadow-1 mb-4">
+                <h3 class="h5 fw-bold text-dark mb-3">Balance de Disponibilidad</h3>
+                <div class="row g-3 text-center mb-3">
+                    <div class="col-4">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <span class="display-6 fw-bold text-success d-block">@Model.AsientosDisponibles</span>
+                            <span class="small fw-semibold text-secondary">Disponibles</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <span class="display-6 fw-bold text-purple d-block" style="color: #6F42C1;">@Model.AsientosReservados</span>
+                            <span class="small fw-semibold text-secondary">Reservados</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <span class="display-6 fw-bold text-danger d-block">@Model.AsientosOcupados</span>
+                            <span class="small fw-semibold text-secondary">Ocupados</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress mb-2" style="height: 10px;">
+                    @{
+                        int pctDisp = (int)Math.Round((Model.AsientosDisponibles / 7.0) * 100);
+                        int pctRes = (int)Math.Round((Model.AsientosReservados / 7.0) * 100);
+                        int pctOcup = (int)Math.Round((Model.AsientosOcupados / 7.0) * 100);
+                    }
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @pctDisp%;" title="Disponibles (@pctDisp%)"></div>
+                    <div class="progress-bar" role="progressbar" style="width: @pctRes%; background-color: #6F42C1;" title="Reservados (@pctRes%)"></div>
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: @pctOcup%;" title="Ocupados (@pctOcup%)"></div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>Capacidad total: 7 plazas</span>
+                    <span>Ocupaci&oacute;n inventario: @(pctOcup + pctRes)%</span>
+                </div>
+            </div>
+
+            <!-- Ficha Técnica del Embraer Phenom 300E -->
+            <div class="card card-avianca p-4 shadow-1 mb-4">
+                <h3 class="h5 fw-bold text-dark mb-3">Confort a Bordo del Embraer Phenom 300E</h3>
+                <ul class="list-unstyled small text-secondary mb-4">
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <span class="text-danger fw-bold">&#10003;</span>
+                        <span><strong>Configuraci&oacute;n Club Seating:</strong> Asientos de cuero con rotaci&oacute;n y reclinaci&oacute;n completa en filas 2 y 3.</span>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <span class="text-danger fw-bold">&#10003;</span>
+                        <span><strong>Mesa Ejecutiva Plegable:</strong> Ideal para trabajo corporativo y refrigerios de alta gama.</span>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <span class="text-danger fw-bold">&#10003;</span>
+                        <span><strong>Ba&ntilde;o Privado Posterior:</strong> Lavatorio cerrado de lujo en la parte trasera de cabina.</span>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <span class="text-danger fw-bold">&#10003;</span>
+                        <span><strong>Presurizaci&oacute;n de Mejor Clase:</strong> Menor fatiga y viaje supersilencioso a 45,000 pies.</span>
+                    </li>
+                </ul>
+
+                @if (Model.AsientosDisponibles > 0)
+                {
+                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = Model.VueloId, tarifa = "Classic", pasajeros = 1 })" 
+                       class="btn btn-avianca-primary w-100 py-3 fw-bold">
+                        Proceder a la Reserva de Asientos (P8) &rarr;
+                    </a>
+                }
+                else
+                {
+                    <div class="alert alert-warning small mb-0 text-center">
+                        Este vuelo no dispone de cupos libres actualmente.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

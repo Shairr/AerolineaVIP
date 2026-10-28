@@ -1,0 +1,218 @@
+@model AerolineaVIP.Models.ComprobanteFiscalViewModel
+@{
+    ViewBag.Title = "Comprobante Fiscal Electrónico SRI - " + Model.NumeroComprobante;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <!-- Barra de Herramientas Superior (Oculta en Impresión) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <a href="@Url.Action("MisReservas", "Reservas")" class="btn btn-outline-dark rounded-pill fw-bold px-4">
+            <i class="bi bi-chevron-left me-1"></i> Volver a Mis Reservas
+        </a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" onclick="window.print();" style="background-color: #E1251B; border-color: #E1251B;">
+                <i class="bi bi-printer-fill me-1"></i> Imprimir / Guardar PDF (SRI)
+            </button>
+        </div>
+    </div>
+
+    <!-- DOCUMENTO TRIBUTARIO SRI (Formato RIDE Oficial) -->
+    <div class="card shadow border-0 rounded-4 p-4 p-md-5 bg-white comprobante-sri-document">
+        <!-- Bloque Superior: Emisor y RIDE -->
+        <div class="row g-4 mb-4 pb-4 border-bottom">
+            <!-- Columna Emisor -->
+            <div class="col-md-6 border-end-md">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-airplane-engines-fill text-danger fs-2"></i>
+                    <h2 class="h4 fw-black text-dark mb-0 tracking-wide">AEROLÍNEA <span class="text-danger">VIP</span> S.A.</h2>
+                </div>
+                <div class="small text-muted mb-1"><strong>Razón Social:</strong> @Model.EmisorRazonSocial</div>
+                <div class="small text-muted mb-1"><strong>RUC:</strong> @Model.EmisorRuc</div>
+                <div class="small text-muted mb-1"><strong>Dirección Matriz:</strong> @Model.EmisorDireccion</div>
+                <div class="small text-muted mb-1"><strong>Contribuyente Especial:</strong> @Model.EmisorContribuyenteEspecial</div>
+                <div class="small text-muted mb-1"><strong>OBLIGADO A LLEVAR CONTABILIDAD:</strong> @Model.EmisorObligadoContabilidad</div>
+            </div>
+
+            <!-- Columna Datos Factura Electrónica SRI -->
+            <div class="col-md-6 ps-md-4">
+                <div class="p-3 bg-light rounded-3 border">
+                    <div class="text-uppercase fw-bold text-dark fs-5 mb-2">@Model.TipoComprobante</div>
+                    <div class="mb-2">
+                        <span class="text-muted small">No. Comprobante:</span>
+                        <span class="font-monospace fw-bold text-danger fs-6 ms-1">@Model.NumeroComprobante</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-muted small">Número de Autorización:</span>
+                        <div class="font-monospace small text-break fw-semibold text-dark">@Model.NumeroAutorizacion</div>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-muted small">Fecha y Hora de Autorización:</span>
+                        <span class="fw-semibold text-dark small ms-1">@Model.FechaEmision.ToString("dd/MM/yyyy HH:mm:ss")</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-muted small">Ambiente:</span> <span class="badge bg-success-subtle text-success small rounded-pill">PRODUCCIÓN</span>
+                        <span class="text-muted small ms-2">Emisión:</span> <span class="badge bg-secondary-subtle text-secondary small rounded-pill">NORMAL</span>
+                    </div>
+                    <div>
+                        <span class="text-muted small">Clave de Acceso:</span>
+                        <div class="font-monospace small text-break text-muted bg-white p-2 rounded border mt-1" style="font-size: 0.75rem;">
+                            @Model.ClaveAccesoSRI
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloque Receptor / Comprador -->
+        <div class="card bg-light-subtle border rounded-3 p-3 mb-4">
+            <div class="row g-2 small">
+                <div class="col-md-8">
+                    <span class="text-muted">Razón Social / Nombres y Apellidos:</span>
+                    <span class="fw-bold text-dark ms-1 text-uppercase">@Model.ClienteNombre</span>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="text-muted">Identificación (C.I./RUC):</span>
+                    <span class="font-monospace fw-bold text-dark ms-1">@Model.ClienteIdentificacion</span>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted">Fecha Emisión:</span>
+                    <span class="fw-semibold text-dark ms-1">@Model.FechaEmision.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="text-muted">Correo Electrónico:</span>
+                    <span class="fw-semibold text-dark ms-1">@Model.ClienteCorreo</span>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted">Código de Reserva VIP:</span>
+                    <span class="font-monospace fw-bold text-danger ms-1">@Model.CodigoReserva</span>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="text-muted">Ruta e Itinerario:</span>
+                    <span class="fw-bold text-dark ms-1">@Model.Ruta</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Ítems / Servicios -->
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light small text-uppercase">
+                    <tr>
+                        <th style="width: 15%;">Cod. Principal</th>
+                        <th style="width: 45%;">Descripción</th>
+                        <th class="text-center" style="width: 10%;">Cant.</th>
+                        <th class="text-end" style="width: 15%;">Precio Unitario</th>
+                        <th class="text-end" style="width: 15%;">Precio Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="font-monospace small">@item.Codigo</td>
+                            <td>
+                                <div class="fw-semibold text-dark">@item.Descripcion</div>
+                            </td>
+                            <td class="text-center">@item.Cantidad</td>
+                            <td class="text-end font-monospace">$@item.PrecioUnitario.ToString("N2")</td>
+                            <td class="text-end font-monospace fw-bold">$@item.Total.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bloque Inferior: Formas de Pago y Resumen Tributario -->
+        <div class="row g-4">
+            <!-- Información de Forma de Pago -->
+            <div class="col-md-6">
+                <div class="card border rounded-3 p-3 h-100">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-3">Información Adicional / Forma de Pago</h6>
+                    <div class="small text-muted mb-2">
+                        <strong>Forma de Pago (SRI 19):</strong> Tarjeta de Crédito (@Model.MarcaTarjeta •••• @Model.Ultimos4)
+                    </div>
+                    <div class="small text-muted mb-2">
+                        <strong>Autorización Bancaria:</strong> <span class="font-monospace">@Model.CodigoAutorizacionBancaria</span>
+                    </div>
+                    <div class="small text-muted mb-2">
+                        <strong>Plazo:</strong> 0 días (Contado)
+                    </div>
+                    <div class="small text-muted mb-2">
+                        <strong>Pasajero(s):</strong> @string.Join(", ", Model.PasajerosNombres)
+                    </div>
+                    <div class="small text-muted">
+                        <strong>Asiento(s) Phenom 300E:</strong> <span class="font-monospace fw-bold text-dark">@Model.Asientos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Totales Tributarios (IVA 15%) -->
+            <div class="col-md-6">
+                <table class="table table-sm table-bordered mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted small ps-3">SUBTOTAL 15% (Tarifa General Ecuador):</td>
+                            <td class="text-end font-monospace fw-semibold pe-3">$@Model.Subtotal15.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small ps-3">SUBTOTAL 0%:</td>
+                            <td class="text-end font-monospace pe-3">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small ps-3">SUBTOTAL NO OBJETO DE IVA:</td>
+                            <td class="text-end font-monospace pe-3">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small ps-3">SUBTOTAL EXENTO DE IVA:</td>
+                            <td class="text-end font-monospace pe-3">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small ps-3 fw-bold">SUBTOTAL SIN IMPUESTOS:</td>
+                            <td class="text-end font-monospace fw-bold pe-3">$@Model.SubtotalSinImpuestos.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small ps-3">TOTAL DESCUENTO:</td>
+                            <td class="text-end font-monospace pe-3">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="text-danger small ps-3 fw-bold">IVA 15%:</td>
+                            <td class="text-end font-monospace fw-bold text-danger pe-3">+$@Model.ValorIva.ToString("N2")</td>
+                        </tr>
+                        <tr class="table-dark">
+                            <td class="ps-3 fw-bold fs-6">VALOR TOTAL (USD):</td>
+                            <td class="text-end font-monospace fw-bold fs-6 pe-3">$@Model.ImporteTotal.ToString("N2")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pie Tributario -->
+        <div class="mt-4 pt-3 border-top text-center text-muted small">
+            Documento Tributario Electrónico emitido de conformidad con la Resolución del Servicio de Rentas Internas (SRI).
+            Para consultas o reclamos, comuníquese con soporte al cliente a <strong>soporte@aerolineavip.com</strong>.
+        </div>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        .no-print, nav, footer, header {
+            display: none !important;
+        }
+        .container {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .comprobante-sri-document {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+            padding: 1.5rem !important;
+        }
+        body {
+            background-color: #ffffff !important;
+        }
+    }
+</style>

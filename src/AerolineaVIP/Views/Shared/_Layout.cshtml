@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Aerol&iacute;nea VIP</title>
+
+    <!-- Google Fonts: Montserrat (Títulos) y Nunito Sans (Cuerpo y UI) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Estilos del Sistema (Bootstrap 5.2 + Tokens Avianca Site.css) -->
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <!-- Sección opcional de estilos específicos (utilizada por Denilson para admin.css) -->
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <!-- Barra de Navegación Modular Superior Fija -->
+    @Html.Partial("_Navbar")
+
+    <!-- Contenedor Principal de Contenido con Compensación de Altura de Barra Fija -->
+    <main class="main-body-wrapper">
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Pie de Página Institucional Modular -->
+    @Html.Partial("_Footer")
+
+    <!-- Scripts Esenciales del Sistema -->
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>
