@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    SISTEMA DE DISEÑO INSPIRADO EN AVIANCA — AEROLÍNEA VIP
    Basado estrictamente en DESIGN.md
    Universidad de las Fuerzas Armadas ESPE — Grupo 6
@@ -580,4 +580,330 @@ a:hover {
     border-color: var(--color-brand-600);
     box-shadow: 0 0 0 3px rgba(217, 0, 0, 0.15);
     outline: none;
+}
+
+/* ==========================================================================
+   COMPONENTES DÍA 3: CABINA EMBRAER PHENOM 300E Y EMBUDO DE RESERVA
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. MAPA DE CABINA PHENOM 300E (_MapaAsientos.cshtml)
+   -------------------------------------------------------------------------- */
+.fuselaje-aeronave {
+    position: relative;
+    max-width: 380px;
+    margin: 0 auto;
+    background: #FAFAFA;
+    border: 3px solid var(--color-line-300);
+    border-radius: 90px 90px 40px 40px;
+    box-shadow: var(--shadow-2);
+    padding: var(--space-6) var(--space-4) var(--space-8);
+    overflow: hidden;
+}
+
+.cabina-mando-proa {
+    text-align: center;
+    padding-bottom: var(--space-4);
+    border-bottom: 2px dashed var(--color-line-300);
+    margin-bottom: var(--space-4);
+}
+
+.cabina-mando-icono {
+    display: inline-block;
+    background: var(--color-ink-900);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 14px;
+    border-radius: var(--radius-pill);
+}
+
+.fila-cabina {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    position: relative;
+}
+
+.fila-etiqueta {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-ink-500);
+    background: #EFEFEF;
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.pasillo-central {
+    width: 60px;
+    text-align: center;
+    border-left: 1px dashed #E0E0E0;
+    border-right: 1px dashed #E0E0E0;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.espacio-puerta {
+    width: 110px;
+    height: 48px;
+    border: 1px dashed var(--color-line-300);
+    background: #F0F0F0;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--color-ink-500);
+    font-weight: 600;
+}
+
+.asiento-boton {
+    width: 110px;
+    min-height: 48px;
+    padding: 6px 8px;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: var(--font-heading);
+    cursor: pointer;
+    transition: all var(--dur-fast) var(--ease);
+    border: 2px solid transparent;
+    user-select: none;
+}
+
+.asiento-codigo {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.asiento-subtexto {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* Estados de color oficiales del instructivo */
+.asiento-disponible {
+    background-color: var(--color-success-50);
+    border-color: var(--color-success-600);
+    color: var(--color-success-600);
+}
+
+.asiento-disponible:hover:not(:disabled) {
+    background-color: #D1E7DD;
+    border-color: var(--color-success-600);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-1);
+}
+
+.asiento-reservado {
+    background-color: #F3E8FF !important;
+    border-color: #6F42C1 !important;
+    color: #6F42C1 !important;
+    cursor: not-allowed !important;
+    opacity: 0.92 !important;
+}
+
+.asiento-reservado .asiento-subtexto {
+    color: #6F42C1 !important;
+    font-weight: 700;
+}
+
+.asiento-ocupado {
+    background-color: var(--color-error-50) !important;
+    border-color: var(--color-error-600) !important;
+    color: var(--color-error-600) !important;
+    cursor: not-allowed !important;
+    opacity: 0.92 !important;
+}
+
+.asiento-ocupado .asiento-subtexto {
+    color: var(--color-error-600) !important;
+    font-weight: 700;
+}
+
+.asiento-seleccionado {
+    background-color: var(--color-brand-600) !important;
+    border-color: var(--color-brand-700) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(217, 0, 0, 0.3) !important;
+    transform: scale(1.03);
+}
+
+.asiento-seleccionado .asiento-subtexto {
+    color: #FFE5E5;
+}
+
+.seccion-popa {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 2px dashed var(--color-line-300);
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+}
+
+.modulo-popa {
+    flex: 1;
+    background: #EFEFEF;
+    border-radius: var(--radius-sm);
+    padding: 6px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-ink-700);
+}
+
+/* --------------------------------------------------------------------------
+   2. STEPPER DE RESERVA (_PasosReserva.cshtml)
+   -------------------------------------------------------------------------- */
+.stepper-avianca {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto var(--space-6);
+    padding: 0 var(--space-4);
+}
+
+.stepper-paso-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    text-decoration: none;
+    color: var(--color-ink-500);
+}
+
+.stepper-circulo {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #FFFFFF;
+    border: 2px solid var(--color-line-300);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--color-ink-500);
+    transition: all var(--dur-base) var(--ease);
+}
+
+.stepper-texto {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 6px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.stepper-paso-item.activo .stepper-circulo {
+    background-color: var(--color-brand-600);
+    border-color: var(--color-brand-600);
+    color: #FFFFFF;
+    box-shadow: 0 0 0 4px rgba(217, 0, 0, 0.2);
+}
+
+.stepper-paso-item.activo .stepper-texto {
+    color: var(--color-brand-600);
+    font-weight: 700;
+}
+
+.stepper-paso-item.completado .stepper-circulo {
+    background-color: var(--color-success-600);
+    border-color: var(--color-success-600);
+    color: #FFFFFF;
+}
+
+.stepper-paso-item.completado .stepper-texto {
+    color: var(--color-success-600);
+}
+
+.stepper-linea-conector {
+    flex-grow: 1;
+    height: 3px;
+    background-color: var(--color-line-300);
+    margin: -20px 8px 0;
+    z-index: 1;
+}
+
+.stepper-linea-conector.completada {
+    background-color: var(--color-success-600);
+}
+
+/* --------------------------------------------------------------------------
+   3. TARJETA RESUMEN DE CHECKOUT Y PASE DE ABORDAR
+   -------------------------------------------------------------------------- */
+.resumen-vuelo-sticky {
+    position: sticky;
+    top: 90px;
+}
+
+.pase-abordar-card {
+    background: #FFFFFF;
+    border: 1px solid var(--color-line-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+    position: relative;
+}
+
+.pase-header {
+    background: linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-800) 100%);
+    color: #FFFFFF;
+    padding: var(--space-4) var(--space-6);
+}
+
+.pase-body {
+    padding: var(--space-6);
+}
+
+.pase-divisor-punteado {
+    border-top: 2px dashed var(--color-line-300);
+    position: relative;
+    margin: var(--space-4) 0;
+}
+
+.pase-divisor-punteado::before, .pase-divisor-punteado::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--color-surface-100);
+}
+
+.pase-divisor-punteado::before {
+    left: -30px;
+}
+
+.pase-divisor-punteado::after {
+    right: -30px;
+}
+
+.codigo-qr-mock {
+    width: 90px;
+    height: 90px;
+    background: repeating-linear-gradient(45deg, #222, #222 5px, #fff 5px, #fff 10px);
+    border: 3px solid #1A1A1A;
+    border-radius: 8px;
+    margin: 0 auto;
 }

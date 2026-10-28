@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\EntityFramework.6.5.1\build\EntityFramework.props" Condition="Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.props')" />
   <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
@@ -177,6 +177,8 @@
     <Compile Include="Controllers\PasajerosAdminController.cs" />
     <Compile Include="Controllers\VuelosAdminController.cs" />
     <Compile Include="Controllers\VuelosController.cs" />
+    <Compile Include="Controllers\ReservasController.cs" />
+    <Compile Include="Controllers\CheckInController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -184,6 +186,9 @@
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\RolesInicializador.cs" />
     <Compile Include="Models\VuelosViewModels.cs" />
+    <Compile Include="Models\EmbudoViewModels.cs" />
+    <Compile Include="Models\ValidadorEcuador.cs" />
+    <Compile Include="Models\PortalClienteViewModels.cs" />
     <Compile Include="Models\AerolineaVIP.Context.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -390,6 +395,20 @@
     <Content Include="Views\Shared\_Footer.cshtml" />
     <Content Include="Views\Vuelos\Buscar.cshtml" />
     <Content Include="Views\Vuelos\Resultados.cshtml" />
+    <Content Include="Views\Vuelos\Disponibilidad.cshtml" />
+    <Content Include="Views\Shared\_MapaAsientos.cshtml" />
+    <Content Include="Views\Shared\_PasosReserva.cshtml" />
+    <Content Include="Views\Shared\_ModalConfirmarPago.cshtml" />
+    <Content Include="Views\Reservas\SeleccionarAsientos.cshtml" />
+    <Content Include="Views\Reservas\Pasajeros.cshtml" />
+    <Content Include="Views\Reservas\Confirmar.cshtml" />
+    <Content Include="Views\Reservas\Pagar.cshtml" />
+        <Content Include="Views\Reservas\Exito.cshtml" />
+    <Content Include="Views\Reservas\MisReservas.cshtml" />
+    <Content Include="Views\Reservas\Gestionar.cshtml" />
+    <Content Include="Views\Reservas\Comprobante.cshtml" />
+    <Content Include="Views\CheckIn\Index.cshtml" />
+    <Content Include="Views\CheckIn\PaseAbordar.cshtml" />
     <Content Include="Views\VuelosAdmin\Create.cshtml" />
     <Content Include="Views\VuelosAdmin\Delete.cshtml" />
     <Content Include="Views\VuelosAdmin\Details.cshtml" />
@@ -438,6 +457,7 @@
     <Content Include="Scripts\bootstrap.bundle.js.map" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
+    <Content Include="Scripts\validaciones-ecuador.js" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

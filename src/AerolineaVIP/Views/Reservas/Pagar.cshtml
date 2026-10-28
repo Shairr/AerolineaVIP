@@ -1,0 +1,379 @@
+@model AerolineaVIP.Models.PagoSimuladoViewModel
+
+@{
+    ViewBag.Title = "Paso 4: Pago Seguro con Tarjeta — " + Model.CodigoPreReserva;
+}
+
+<div class="container py-4">
+    <!-- Stepper de Progreso (Paso 4 Activo) -->
+    @Html.Partial("_PasosReserva", 4)
+
+    <!-- Encabezado de la Pantalla 11 -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 11</span>
+                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 4 de 4</span>
+                <span class="badge bg-success text-white rounded-pill px-3 py-1">&#128274; Transacci&oacute;n Segura 256-bit SSL</span>
+            </div>
+            <h1 class="h2 fw-bold text-dark mb-0">
+                Pasarela de Pago Seguro
+            </h1>
+            <p class="text-secondary small mb-0">
+                Ingrese los datos de su tarjeta de cr&eacute;dito o d&eacute;bito autorizada para confirmar su reserva de vuelo privado.
+            </p>
+        </div>
+
+        <div>
+            <a href="@Url.Action("Confirmar", "Reservas", new { vueloId = Model.VueloId, tarifa = Model.TarifaSeleccionada })" 
+               class="btn btn-outline-secondary btn-sm">
+                &larr; Volver al resumen
+            </a>
+        </div>
+    </div>
+
+    @using (Html.BeginForm("ProcesarPago", "Reservas", FormMethod.Post, new { id = "formPagoSimulado" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.CodigoPreReserva)
+        @Html.HiddenFor(m => m.VueloId)
+        @Html.HiddenFor(m => m.CodigoVuelo)
+        @Html.HiddenFor(m => m.FechaOperacion)
+        @Html.HiddenFor(m => m.OrigenCodigo)
+        @Html.HiddenFor(m => m.DestinoCodigo)
+        @Html.HiddenFor(m => m.TotalPagar)
+        @Html.HiddenFor(m => m.TarifaSeleccionada)
+        @Html.HiddenFor(m => m.CantidadPasajeros)
+        @Html.HiddenFor(m => m.AsientosCodigos)
+
+        <div class="row g-4">
+            <!-- Columna Izquierda: Formulario de Tarjeta -->
+            <div class="col-lg-7">
+                <div class="card card-avianca p-4 shadow-1 mb-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h3 class="h5 fw-bold text-dark mb-0">&#128179; Datos de la Tarjeta</h3>
+                        <span class="badge bg-light text-dark border">&#128274; Pagos Encriptados</span>
+                    </div>
+
+                    <!-- Selector de Marca de Tarjeta -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Marca de Tarjeta Autorizada</label>
+                        <div class="d-flex flex-wrap gap-2" id="grupoMarcasTarjeta">
+                            <label class="btn btn-outline-secondary flex-fill text-center py-2 active" id="lblVisa">
+                                @Html.RadioButtonFor(m => m.MarcaTarjeta, "VISA", new { @checked = "checked" })
+                                <span class="fw-bold d-block">Visa</span>
+                            </label>
+                            <label class="btn btn-outline-secondary flex-fill text-center py-2" id="lblMastercard">
+                                @Html.RadioButtonFor(m => m.MarcaTarjeta, "MASTERCARD")
+                                <span class="fw-bold d-block">Mastercard</span>
+                            </label>
+                            <label class="btn btn-outline-secondary flex-fill text-center py-2" id="lblAmex">
+                                @Html.RadioButtonFor(m => m.MarcaTarjeta, "AMEX")
+                                <span class="fw-bold d-block">Amex</span>
+                            </label>
+                            <label class="btn btn-outline-secondary flex-fill text-center py-2" id="lblDiners">
+                                @Html.RadioButtonFor(m => m.MarcaTarjeta, "DINERS")
+                                <span class="fw-bold d-block">Diners Club</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Titular de la Tarjeta -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Nombre y Apellido del Titular *</label>
+                        @Html.TextBoxFor(m => m.TitularTarjeta, new { @class = "form-control text-uppercase", placeholder = "COMO FIGURA EN EL PLÁSTICO", maxlength = "50", required = "required", id = "inputTitular" })
+                        <div class="invalid-feedback"></div>
+                        @Html.ValidationMessageFor(m => m.TitularTarjeta, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <!-- Número de Tarjeta -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold text-dark mb-0">N&uacute;mero de Tarjeta de Cr&eacute;dito o D&eacute;bito *</label>
+                            <span class="badge bg-light text-dark border" id="badgeMarcaDetectada">Detectar marca</span>
+                        </div>
+                        @Html.TextBoxFor(m => m.NumeroTarjeta, new { @class = "form-control fs-6 font-monospace", placeholder = "4500 1234 5678 9010", maxlength = "19", required = "required", id = "inputNumeroTarjeta" })
+                        <div class="invalid-feedback"></div>
+                        @Html.ValidationMessageFor(m => m.NumeroTarjeta, "", new { @class = "text-danger small" })
+                        <span class="small text-muted" style="font-size: 11px;">
+                            * Ingrese los 16 dígitos de su tarjeta (o 15 para American Express, 14 para Diners Club).
+                        </span>
+                    </div>
+
+                    <!-- Fecha de Vencimiento y Código CVV -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-4">
+                            <label class="form-label small fw-bold text-dark">Mes (MM) *</label>
+                            @Html.DropDownListFor(m => m.MesExpiracion, Enumerable.Range(1, 12).Select(i => new SelectListItem
+                            {
+                                Text = i.ToString("D2"),
+                                Value = i.ToString("D2")
+                            }), new { @class = "form-select", id = "selectMes" })
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small fw-bold text-dark">A&ntilde;o (AA) *</label>
+                            @Html.DropDownListFor(m => m.AnioExpiracion, Enumerable.Range(26, 8).Select(i => new SelectListItem
+                            {
+                                Text = "20" + i,
+                                Value = i.ToString()
+                            }), new { @class = "form-select", id = "selectAnio" })
+                            <div class="invalid-feedback" id="feedbackExpiracion"></div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small fw-bold text-dark">CVV / CVC *</label>
+                            @Html.TextBoxFor(m => m.Cvv, new { @class = "form-control font-monospace", placeholder = "889", maxlength = "3", required = "required", id = "inputCvv" })
+                            <div class="invalid-feedback"></div>
+                            @Html.ValidationMessageFor(m => m.Cvv, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+
+                    <!-- Checkbox de Aceptación -->
+                    <div class="form-check mb-2">
+                        @Html.CheckBoxFor(m => m.AceptoTerminos, new { @class = "form-check-input", id = "checkTerminos" })
+                        <label class="form-check-label small text-secondary" for="checkTerminos">
+                            Confirmo los datos ingresados y autorizo el procesamiento del pago de la reserva conforme a las pol&iacute;ticas tarifarias de Aerol&iacute;nea VIP.
+                        </label>
+                        @Html.ValidationMessageFor(m => m.AceptoTerminos, "", new { @class = "text-danger small d-block" })
+                    </div>
+                </div>
+
+                <!-- Aviso de Seguridad Bancaria Real -->
+                <div class="alert alert-secondary border-0 p-3 small d-flex align-items-center gap-2">
+                    <span class="fs-4 text-success">&#128737;</span>
+                    <div>
+                        <strong>Seguridad Bancaria Garantizada:</strong> Todas las transacciones se transmiten bajo cifrado TLS de 256 bits y certificaci&oacute;n bancaria internacional. Sus datos est&aacute;n plenamente protegidos.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Resumen de Cargo y Activación de Modal -->
+            <div class="col-lg-5">
+                <div class="resumen-vuelo-sticky">
+                    <div class="card card-avianca p-4 shadow-2 border">
+                        <h4 class="h5 fw-bold border-bottom pb-2 mb-3 text-dark">Resumen del Pago</h4>
+
+                        <div class="mb-3">
+                            <div class="small text-muted">Pre-Reserva:</div>
+                            <strong class="text-dark fs-6">@Model.CodigoPreReserva</strong>
+                        </div>
+
+                        <div class="card bg-light p-3 border rounded-3 mb-3">
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span>Ruta:</span>
+                                <strong class="text-dark">@Model.OrigenCodigo &rarr; @Model.DestinoCodigo</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span>Pasajeros:</span>
+                                <strong>@Model.CantidadPasajeros persona@(Model.CantidadPasajeros > 1 ? "s" : "")</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-secondary">
+                                <span>Asientos:</span>
+                                <strong class="text-danger">@Model.AsientosCodigos</strong>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h6 fw-bold text-dark mb-0">Total a Debitar:</span>
+                                <span class="h3 fw-bold text-danger mb-0">
+                                    USD @Model.TotalPagar.ToString("N2")
+                                </span>
+                            </div>
+                            <span class="small text-muted d-block mt-1">IVA 15% y tasas incluidas.</span>
+                        </div>
+
+                        <!-- Botón que activa el Modal Reutilizable _ModalConfirmarPago -->
+                        <button type="button" class="btn btn-avianca-primary w-100 py-3 fw-bold fs-6" id="btnAbrirModalPago">
+                            Pagar USD @Model.TotalPagar.ToString("N2") &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Inclusión de la Vista Parcial Reutilizable _ModalConfirmarPago -->
+    @Html.Partial("_ModalConfirmarPago", Model)
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/validaciones-ecuador.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 1. Normalización y validación del Titular
+            $("#inputTitular").on("input", function () {
+                var val = $(this).val().toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s\']/g, '');
+                $(this).val(val);
+                validarTitularInput();
+            }).on("blur", function () {
+                var normalizado = ValidadorEcuadorJS.normalizarEspacios($(this).val()).toUpperCase();
+                $(this).val(normalizado);
+                validarTitularInput();
+            });
+
+            function validarTitularInput() {
+                var res = ValidadorEcuadorJS.validarTitular($("#inputTitular").val());
+                if (res.valido) {
+                    ValidadorEcuadorJS.marcarValido($("#inputTitular"));
+                } else {
+                    ValidadorEcuadorJS.marcarInvalido($("#inputTitular"), res.mensaje);
+                }
+                return res.valido;
+            }
+
+            // 2. Detección automática de marca y formateo de tarjeta
+            $("#inputNumeroTarjeta").on("input", function () {
+                var raw = $(this).val().replace(/\D/g, '');
+                var marcaDetectada = ValidadorEcuadorJS.detectarMarcaTarjeta(raw);
+
+                if (marcaDetectada) {
+                    $("input[name='MarcaTarjeta'][value='" + marcaDetectada + "']").prop("checked", true);
+                    $("#grupoMarcasTarjeta label").removeClass("active");
+                    $("input[name='MarcaTarjeta'][value='" + marcaDetectada + "']").closest("label").addClass("active");
+                    $("#badgeMarcaDetectada").removeClass("bg-light text-dark bg-secondary")
+                                             .addClass("bg-danger text-white")
+                                             .text(marcaDetectada);
+
+                    // Ajustar longitud CVV si es Amex
+                    if (marcaDetectada === "AMEX") {
+                        $("#inputCvv").attr("maxlength", "4").attr("placeholder", "1234");
+                    } else {
+                        $("#inputCvv").attr("maxlength", "3").attr("placeholder", "889");
+                    }
+                } else {
+                    $("#badgeMarcaDetectada").removeClass("bg-danger text-white")
+                                             .addClass("bg-light text-dark")
+                                             .text("Detectando...");
+                }
+
+                // Formateo visual con espacios
+                var formatted = raw.match(/.{1,4}/g)?.join(' ') || raw;
+                if (formatted.length > 23) formatted = formatted.substring(0, 23);
+                $(this).val(formatted);
+
+                validarTarjetaInput();
+            }).on("blur", function () {
+                validarTarjetaInput();
+            });
+
+            function validarTarjetaInput() {
+                var $input = $("#inputNumeroTarjeta");
+                var raw = $input.val().replace(/\D/g, '');
+                var marca = $("input[name='MarcaTarjeta']:checked").val() || "VISA";
+                var minDigitos = (marca === "DINERS") ? 14 : 15;
+
+                if (!raw) {
+                    ValidadorEcuadorJS.marcarInvalido($input, "El número de tarjeta es obligatorio.");
+                    return false;
+                }
+
+                if (raw.length < minDigitos) {
+                    ValidadorEcuadorJS.marcarInvalido($input, "El número de tarjeta debe contener al menos " + minDigitos + " dígitos numéricos.");
+                    return false;
+                }
+
+                if (raw.length > 19) {
+                    ValidadorEcuadorJS.marcarInvalido($input, "El número de tarjeta no puede exceder los 19 dígitos.");
+                    return false;
+                }
+
+                ValidadorEcuadorJS.marcarValido($input, "Tarjeta autorizada (" + marca + ")");
+                return true;
+            }
+
+            // Cambio manual de marca
+            $("input[name='MarcaTarjeta']").on("change", function () {
+                var marca = $(this).val();
+                $("#grupoMarcasTarjeta label").removeClass("active");
+                $(this).closest("label").addClass("active");
+                if (marca === "AMEX") {
+                    $("#inputCvv").attr("maxlength", "4").attr("placeholder", "1234");
+                } else {
+                    $("#inputCvv").attr("maxlength", "3").attr("placeholder", "889");
+                }
+                validarTarjetaInput();
+                validarCvvInput();
+            });
+
+            // 3. Validación de CVV
+            $("#inputCvv").on("input blur", function () {
+                var soloNum = $(this).val().replace(/\D/g, '');
+                var marca = $("input[name='MarcaTarjeta']:checked").val() || "VISA";
+                var max = marca === "AMEX" ? 4 : 3;
+                if (soloNum.length > max) soloNum = soloNum.substring(0, max);
+                $(this).val(soloNum);
+                validarCvvInput();
+            });
+
+            function validarCvvInput() {
+                var $input = $("#inputCvv");
+                var marca = $("input[name='MarcaTarjeta']:checked").val() || "VISA";
+                var res = ValidadorEcuadorJS.validarCvv($input.val(), marca);
+
+                if (res.valido) {
+                    ValidadorEcuadorJS.marcarValido($input);
+                } else {
+                    ValidadorEcuadorJS.marcarInvalido($input, res.mensaje);
+                }
+                return res.valido;
+            }
+
+            // 4. Validación de Expiración
+            $("#selectMes, #selectAnio").on("change", function () {
+                validarExpiracionInput();
+            });
+
+            function validarExpiracionInput() {
+                var mes = $("#selectMes").val();
+                var anio = $("#selectAnio").val();
+                var res = ValidadorEcuadorJS.validarExpiracion(mes, anio);
+
+                if (res.valido) {
+                    $("#selectMes, #selectAnio").removeClass("is-invalid").addClass("is-valid");
+                    $("#feedbackExpiracion").hide();
+                } else {
+                    $("#selectMes, #selectAnio").removeClass("is-valid").addClass("is-invalid");
+                    $("#feedbackExpiracion").text(res.mensaje).show();
+                }
+                return res.valido;
+            }
+
+            // 5. Apertura del modal de confirmación
+            $("#btnAbrirModalPago").on("click", function () {
+                var vTitular = validarTitularInput();
+                var vTarjeta = validarTarjetaInput();
+                var vExpiracion = validarExpiracionInput();
+                var vCvv = validarCvvInput();
+                var acepto = $("#checkTerminos").is(":checked");
+
+                if (!acepto) {
+                    alert("Por favor acepte los términos y condiciones para procesar el pago.");
+                    $("#checkTerminos").focus();
+                    return;
+                }
+
+                if (!vTitular || !vTarjeta || !vExpiracion || !vCvv) {
+                    alert("Por favor corrija los campos marcados en rojo antes de continuar.");
+                    return;
+                }
+
+                var titular = $("#inputTitular").val();
+                var tarjeta = $("#inputNumeroTarjeta").val().replace(/\D/g, '');
+                var ultimos4 = tarjeta.slice(-4);
+                var marca = $("input[name='MarcaTarjeta']:checked").val() || "VISA";
+
+                $("#modalTitular").text(titular);
+                $("#modalTarjeta").text(marca + " •••• " + ultimos4);
+
+                var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPago'));
+                modal.show();
+            });
+
+            // Confirmación dentro del modal
+            $("#btnEjecutarPagoSubmit").on("click", function () {
+                $(this).attr("disabled", "disabled").text("Autorizando transacción...");
+                $("#formPagoSimulado").submit();
+            });
+        });
+    </script>
+}
