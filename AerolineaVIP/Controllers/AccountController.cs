@@ -164,10 +164,13 @@ namespace AerolineaVIP.Controllers
                         // rolAsignado = model.SelectedRole ?? "Cliente";
                     }
 
+                    // Asignar el rol al nuevo usuario en la base de datos
                     await UserManager.AddToRoleAsync(user.Id, rolAsignado);
 
+                    // Iniciar sesión automáticamente tras el registro
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
 
+                    // Redirigir a la página principal
                     return RedirectToAction("Index", "Home");
                 }
                 AddErrors(result);
