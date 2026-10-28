@@ -1,0 +1,65 @@
+﻿@{
+    ViewBag.Title = "Panel del administrador";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="my-3">
+    <!-- Cuadro punteado de Alcance (tal cual la imagen del wireframe) -->
+    <div class="p-3 mb-4 rounded" style="border: 1px dashed #B26A00; background-color: #FFF4E0; color: #8A4B00;">
+        <span class="fw-bold">Alcance:</span> Dashboard excluido de la primera entrega. No desarrollar indicadores ni gráficos en esta pantalla.
+    </div>
+
+    <!-- Título principal -->
+    <h1 class="h2 fw-bold text-dark mb-4">Administración</h1>
+
+    <!-- Las 4 Cajas de Acceso del Wireframe (Cuadrícula 2x2) -->
+    <div class="row g-4">
+        <!-- Caja 1: Administrar vuelos e itinerarios (Pantalla 18) -->
+        <div class="col-12 col-md-6">
+            <div class="card-avianca p-4 shadow-1 h-100 border">
+                <a href="@Url.Action("Index", "VuelosAdmin")" class="btn btn-avianca-primary py-2 px-4 mb-2">
+                    Administrar vuelos e itinerarios
+                </a>
+                <div class="text-muted small mt-2">
+                    Pantalla 18
+                </div>
+            </div>
+        </div>
+
+        <!-- Caja 2: Gestionar aeronaves (Pantalla 19) -->
+        <div class="col-12 col-md-6">
+            <div class="card-avianca p-4 shadow-1 h-100 border">
+                <a href="@Url.Action("Index", "AeronavesAdmin")" class="btn btn-avianca-primary py-2 px-4 mb-2">
+                    Gestionar aeronaves
+                </a>
+                <div class="text-muted small mt-2">
+                    Pantalla 19
+                </div>
+            </div>
+        </div>
+
+        <!-- Caja 3: Usuarios, pasajeros y reservas (Pantalla 20) -->
+        <div class="col-12 col-md-6">
+            <div class="card-avianca p-4 shadow-1 h-100 border">
+                <a href="@Url.Action("Index", "PasajerosAdmin")" class="btn btn-avianca-primary py-2 px-4 mb-2">
+                    Usuarios, pasajeros y reservas
+                </a>
+                <div class="text-muted small mt-2">
+                    Pantalla 20
+                </div>
+            </div>
+        </div>
+
+        <!-- Caja 4: Consultas y reportes (Pantalla 21) -->
+        <div class="col-12 col-md-6">
+            <div class="card-avianca p-4 shadow-1 h-100 border">
+                <a href="@Url.Action("Reportes", "Admin")" class="btn btn-avianca-primary py-2 px-4 mb-2">
+                    Consultas y reportes
+                </a>
+                <div class="text-muted small mt-2">
+                    Pantalla 21
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

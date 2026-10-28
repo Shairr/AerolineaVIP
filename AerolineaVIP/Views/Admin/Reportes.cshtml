@@ -1,0 +1,118 @@
+﻿@{
+    ViewBag.Title = "Consultas y reportes administrativos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card-avianca p-4 shadow-1 my-3">
+    <!-- Formulario de Filtros del Wireframe -->
+    <form method="get" class="mb-4">
+        <!-- Fila 1: Consulta *, Fecha desde *, Fecha hasta * -->
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-bold">Consulta *</label>
+                <select name="consulta" class="form-select form-control">
+                    <option selected>Ocupación por vuelo</option>
+                    <option>Reservas por estado</option>
+                    <option>Compras y pagos simulados</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-bold">Fecha desde *</label>
+                <input type="text" class="form-control" placeholder="dd/mm/aaaa" value="01/10/2026" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-bold">Fecha hasta *</label>
+                <input type="text" class="form-control" placeholder="dd/mm/aaaa" value="30/11/2026" />
+            </div>
+        </div>
+
+        <!-- Fila 2: Ruta (opcional), Aeronave (opcional), Estado (opcional) -->
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label small text-muted">Ruta (opcional)</label>
+                <select name="ruta" class="form-select form-control">
+                    <option selected>Todas</option>
+                    <option>UIO → GYE (Quito a Guayaquil)</option>
+                    <option>UIO → MEC (Quito a Manta)</option>
+                    <option>GYE → GPS (Guayaquil a Galápagos)</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label small text-muted">Aeronave (opcional)</label>
+                <select name="aeronave" class="form-select form-control">
+                    <option selected>Todas</option>
+                    <option>AV-01</option>
+                    <option>AV-02</option>
+                    <option>AV-03</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label small text-muted">Estado (opcional)</label>
+                <select name="estado" class="form-select form-control">
+                    <option selected>Todos</option>
+                    <option>Programado</option>
+                    <option>Completado</option>
+                    <option>Cancelado</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botones del Wireframe -->
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-avianca-primary">
+                Consultar
+            </button>
+            <button type="button" class="btn btn-avianca-outline-sm">
+                Actualizar resultados
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" style="border-style: dashed;" disabled title="Visible solo si la función se aprueba">
+                Exportar
+            </button>
+        </div>
+    </form>
+
+    <!-- Leyenda Informativa del Wireframe -->
+    <div class="text-muted small mb-3 border-top pt-3">
+        Datos con corte al 22/10/2026 10:45 · Disponibles = Capacidad − Ocupados (asientos reservados u ocupados)
+    </div>
+
+    <!-- Tabla con los datos exactos del Wireframe de la imagen -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small fw-bold">Vuelo</th>
+                    <th class="small fw-bold">Fecha</th>
+                    <th class="small fw-bold">Ruta</th>
+                    <th class="small fw-bold">Aeronave</th>
+                    <th class="small fw-bold">Capacidad</th>
+                    <th class="small fw-bold">Ocupados</th>
+                    <th class="small fw-bold">Disponibles</th>
+                    <th class="small fw-bold">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="fw-bold">VIP00042</td>
+                    <td>08/11/2026</td>
+                    <td>UIO → GYE</td>
+                    <td>AV-03</td>
+                    <td>7</td>
+                    <td>3</td>
+                    <td>4</td>
+                    <td><span class="badge bg-primary">Programado</span></td>
+                </tr>
+                <tr>
+                    <td class="fw-bold">VIP00022</td>
+                    <td>18/10/2026</td>
+                    <td>GYE → GPS</td>
+                    <td>AV-03</td>
+                    <td>7</td>
+                    <td>7</td>
+                    <td>0</td>
+                    <td><span class="badge bg-secondary">Completado</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

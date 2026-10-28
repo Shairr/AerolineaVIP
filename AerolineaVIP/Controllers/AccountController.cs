@@ -62,44 +62,45 @@ namespace AerolineaVIP.Controllers
         }
 
         //
-        //
         // POST: /Account/Login
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Login(LoginViewModel model, string returnUrl)
+        public ActionResult Login(LoginViewModel model, string returnUrl)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            // 1. Determinar el UserName real:
-            // Si escribió un correo (ej. admin@aerolineavip.com), buscamos su usuario
-            var usuarioPorEmail = await UserManager.FindByEmailAsync(model.Email);
+            // 1. Determinar el UserName de forma sincrónica:
+            // Si escribió un correo (ej. admin@aerolineavip.com), buscamos el usuario asociado
+            var usuarioPorEmail = UserManager.FindByEmail(model.Email);
             string nombreUsuarioFinal = usuarioPorEmail != null ? usuarioPorEmail.UserName : model.Email;
 
-            // 2. Intentar iniciar sesión con el nombre de usuario
-            var result = await SignInManager.PasswordSignInAsync(nombreUsuarioFinal, model.Password, model.RememberMe, shouldLockout: false);
+            // 2. Intentar iniciar sesión sincrónicamente con el nombre de usuario
+            var result = SignInManager.PasswordSignIn(nombreUsuarioFinal, model.Password, model.RememberMe, shouldLockout: false);
 
             switch (result)
             {
                 case SignInStatus.Success:
-                    // Si venía intentando entrar a una URL protegida (como /VuelosAdmin), lo enviamos allá
+                    // Si intentaba ingresar a una ruta protegida con ReturnUrl, lo redirigimos allí
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     {
                         return Redirect(returnUrl);
                     }
 
-                    // Redirección por Rol si entró directamente al Login
-                    var usuarioLogueado = await UserManager.FindByNameAsync(nombreUsuarioFinal);
-                    var roles = await UserManager.GetRolesAsync(usuarioLogueado.Id);
+                    // Redirección sincrónica según el Rol del usuario autenticado
+                    var usuarioLogueado = UserManager.FindByName(nombreUsuarioFinal);
+                    var roles = UserManager.GetRoles(usuarioLogueado.Id);
 
                     if (roles.Contains("Administrador") || roles.Contains("SuperUsuario"))
                     {
-                        // Si tienes /VuelosAdmin o /Admin
-                        return RedirectToAction("Index", "VuelosAdmin");
+                        // Redirige al Panel de Administración (Pantalla 17)
+                        return RedirectToAction("Index", "Admin");
                     }
+
+                    // Clientes o usuarios estándar van al inicio
                     return RedirectToAction("Index", "Home");
 
                 case SignInStatus.LockedOut:
