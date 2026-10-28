@@ -7,3 +7,9 @@ packages/
 *.suo
 *.userosscache
 *.sln.docstates
+
+## Documentacion y scripts de BD ignorados
+PLAN.md
+DESIGN.md
+*.sql
+Script_BD_AerolineaVIP.sql
