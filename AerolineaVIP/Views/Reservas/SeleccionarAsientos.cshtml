@@ -14,7 +14,8 @@
             <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 8</span>
                 <span class="badge bg-dark rounded-pill px-3 py-1">Paso 1 de 4</span>
-                <span class="small text-muted">Aeronave Oficial: Phenom 300E</span>
+                <span class="badge bg-light text-dark border">Vuelo @Model.CodigoVuelo &bull; @Model.FechaOperacion.ToString("dd MMM yyyy")</span>
+                <span class="small text-muted ms-1">Aeronave Oficial: Phenom 300E</span>
             </div>
             <h1 class="h2 fw-bold text-dark mb-0">
                 Selecci&oacute;n de Asientos en Cabina
@@ -25,7 +26,7 @@
         </div>
 
         <div>
-            <a href="@Url.Action("Resultados", "Vuelos")" class="btn btn-outline-secondary btn-sm">
+            <a href="@Url.Action("Resultados", "Vuelos", new { origen = Model.OrigenCodigo, destino = Model.DestinoCodigo, fechaSalida = Model.FechaOperacion.ToString("yyyy-MM-dd"), pasajeros = Model.CantidadPasajeros })" class="btn btn-outline-secondary btn-sm">
                 &larr; Cambiar vuelo
             </a>
         </div>
@@ -140,6 +141,12 @@
             if (inicial) {
                 asientosSeleccionados = inicial.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
             }
+
+            // Descartar de la selecciÃ³n cualquier asiento que estÃ© ocupado o reservado
+            asientosSeleccionados = asientosSeleccionados.filter(function (cod) {
+                var btn = $(".asiento-boton[data-codigo='" + cod + "']");
+                return btn.length > 0 && btn.data("estado") === "DISPONIBLE";
+            });
 
             actualizarEstadoVisual();
 

@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    SISTEMA DE DISEÑO INSPIRADO EN AVIANCA — AEROLÍNEA VIP
    Basado estrictamente en DESIGN.md
    Universidad de las Fuerzas Armadas ESPE — Grupo 6
@@ -711,19 +711,29 @@ a:hover {
 }
 
 .asiento-reservado {
-    background-color: #F3E8FF;
-    border-color: #6F42C1;
-    color: #6F42C1;
-    cursor: not-allowed;
-    opacity: 0.9;
+    background-color: #F3E8FF !important;
+    border-color: #6F42C1 !important;
+    color: #6F42C1 !important;
+    cursor: not-allowed !important;
+    opacity: 0.92 !important;
+}
+
+.asiento-reservado .asiento-subtexto {
+    color: #6F42C1 !important;
+    font-weight: 700;
 }
 
 .asiento-ocupado {
-    background-color: var(--color-error-50);
-    border-color: var(--color-error-600);
-    color: var(--color-error-600);
-    cursor: not-allowed;
-    opacity: 0.85;
+    background-color: var(--color-error-50) !important;
+    border-color: var(--color-error-600) !important;
+    color: var(--color-error-600) !important;
+    cursor: not-allowed !important;
+    opacity: 0.92 !important;
+}
+
+.asiento-ocupado .asiento-subtexto {
+    color: var(--color-error-600) !important;
+    font-weight: 700;
 }
 
 .asiento-seleccionado {
