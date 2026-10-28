@@ -1,0 +1,137 @@
+@model AerolineaVIP.Models.MapaCabinaViewModel
+
+@{
+    var asiento1D = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "1D");
+    var asiento2I = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "2I");
+    var asiento2D = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "2D");
+    var asiento3I = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "3I");
+    var asiento3D = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "3D");
+    var asiento4I = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "4I");
+    var asiento4D = Model.Asientos.FirstOrDefault(a => a.CodigoAsiento == "4D");
+}
+
+<div class="mapa-cabina-wrapper text-center my-3">
+    <!-- FUSELAJE DE LA AERONAVE EMBRAER PHENOM 300E -->
+    <div class="fuselaje-aeronave" id="fuselajeCabina">
+        <!-- Morro / Cabina de Mando -->
+        <div class="cabina-mando-proa">
+            <span class="cabina-mando-icono">&#9992; Cabina de Mando</span>
+            <div class="small text-muted mt-1" style="font-size: 11px;">
+                Matr&iacute;cula: <strong>@Model.AeronaveMatricula</strong> &bull; @Model.ModeloAeronave
+            </div>
+        </div>
+
+        <!-- FILA 1: Puerta de acceso a la izquierda, Asiento 1D a la derecha -->
+        <div class="fila-cabina">
+            <span class="fila-etiqueta">Fila 1</span>
+            <!-- Lado Izquierdo: Puerta / Galley -->
+            <div class="espacio-puerta" title="Puerta principal de embarque y galera">
+                &#128682; Puerta / Galley
+            </div>
+
+            <div class="pasillo-central"></div>
+
+            <!-- Lado Derecho: Asiento 1D -->
+            @RenderBotonAsiento(asiento1D)
+        </div>
+
+        <!-- FILA 2: Asiento 2I (izq) y Asiento 2D (der) -->
+        <div class="fila-cabina">
+            <span class="fila-etiqueta">Fila 2</span>
+            @RenderBotonAsiento(asiento2I)
+            <div class="pasillo-central"></div>
+            @RenderBotonAsiento(asiento2D)
+        </div>
+
+        <!-- FILA 3: Asiento 3I (izq) y Asiento 3D (der) con mesa ejecutiva -->
+        <div class="fila-cabina">
+            <span class="fila-etiqueta">Fila 3</span>
+            @RenderBotonAsiento(asiento3I)
+            <div class="pasillo-central"></div>
+            @RenderBotonAsiento(asiento3D)
+        </div>
+
+        <!-- FILA 4: Asiento 4I (izq) y Asiento 4D (der) -->
+        <div class="fila-cabina">
+            <span class="fila-etiqueta">Fila 4</span>
+            @RenderBotonAsiento(asiento4I)
+            <div class="pasillo-central"></div>
+            @RenderBotonAsiento(asiento4D)
+        </div>
+
+        <!-- SECCIÓN POPA: Baño VIP y compartimento de equipaje de mano -->
+        <div class="seccion-popa">
+            <div class="modulo-popa" title="Baño privado VIP">
+                &#128701; Ba&ntilde;o VIP
+            </div>
+            <div class="modulo-popa" title="Guardarropa y compartimento posterior">
+                &#129539; Equipaje VIP
+            </div>
+        </div>
+    </div>
+
+    <!-- LEYENDA OFICIAL DE COLORES Y ESTADOS (DP-11 / Requisito 10) -->
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 pt-2 border-top">
+        <div class="d-flex align-items-center gap-1">
+            <span class="badge rounded-pill" style="background-color: var(--color-success-600); width: 14px; height: 14px; padding: 0;">&nbsp;</span>
+            <span class="small fw-semibold text-dark">Disponible (Verde)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="badge rounded-pill" style="background-color: #6F42C1; width: 14px; height: 14px; padding: 0;">&nbsp;</span>
+            <span class="small fw-semibold text-dark">Reservado (Morado)</span>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <span class="badge rounded-pill" style="background-color: var(--color-error-600); width: 14px; height: 14px; padding: 0;">&nbsp;</span>
+            <span class="small fw-semibold text-dark">Ocupado (Rojo)</span>
+        </div>
+        @if (!Model.EsSoloLectura)
+        {
+            <div class="d-flex align-items-center gap-1">
+                <span class="badge rounded-pill" style="background-color: var(--color-brand-600); width: 14px; height: 14px; padding: 0;">&nbsp;</span>
+                <span class="small fw-semibold text-dark">Tu Selecci&oacute;n (Rojo Marca)</span>
+            </div>
+        }
+    </div>
+</div>
+
+@helper RenderBotonAsiento(AerolineaVIP.Models.AsientoEstadoViewModel asiento)
+{
+    if (asiento == null)
+    {
+        return;
+    }
+
+    string estadoClase = "asiento-disponible";
+    string subtexto = "Libre";
+    bool deshabilitado = Model.EsSoloLectura || !asiento.EsAccesible;
+
+    if (asiento.EstadoVisual == "OCUPADO")
+    {
+        estadoClase = "asiento-ocupado";
+        subtexto = "Ocupado";
+        deshabilitado = true;
+    }
+    else if (asiento.EstadoVisual == "RESERVADO")
+    {
+        estadoClase = "asiento-reservado";
+        subtexto = "Reservado";
+        deshabilitado = true;
+    }
+    else if (asiento.EsSeleccionado)
+    {
+        estadoClase = "asiento-disponible asiento-seleccionado";
+        subtexto = "Elegido";
+    }
+
+    <button type="button" 
+            class="asiento-boton @estadoClase" 
+            data-codigo="@asiento.CodigoAsiento"
+            data-numero="@asiento.NumeroAsiento"
+            data-estado="@asiento.EstadoVisual"
+            title="@asiento.Ubicacion - Estado: @asiento.EstadoVisual"
+            aria-label="Asiento @asiento.CodigoAsiento, @subtexto"
+            @(deshabilitado ? "disabled='disabled'" : "")>
+        <span class="asiento-codigo">@asiento.CodigoAsiento</span>
+        <span class="asiento-subtexto">@subtexto</span>
+    </button>
+}

@@ -1,0 +1,76 @@
+@model int?
+
+@{
+    int pasoActual = Model ?? (ViewBag.PasoActivo as int? ?? 1);
+}
+
+<div class="stepper-avianca" aria-label="Progreso del proceso de reserva">
+    <!-- Paso 1: Asientos -->
+    <div class="stepper-paso-item @(pasoActual == 1 ? "activo" : (pasoActual > 1 ? "completado" : ""))">
+        <div class="stepper-circulo">
+            @if (pasoActual > 1)
+            {
+                <span>&#10003;</span>
+            }
+            else
+            {
+                <span>1</span>
+            }
+        </div>
+        <span class="stepper-texto">1. Asientos</span>
+    </div>
+
+    <!-- Conector 1 -> 2 -->
+    <div class="stepper-linea-conector @(pasoActual > 1 ? "completada" : "")"></div>
+
+    <!-- Paso 2: Pasajeros -->
+    <div class="stepper-paso-item @(pasoActual == 2 ? "activo" : (pasoActual > 2 ? "completado" : ""))">
+        <div class="stepper-circulo">
+            @if (pasoActual > 2)
+            {
+                <span>&#10003;</span>
+            }
+            else
+            {
+                <span>2</span>
+            }
+        </div>
+        <span class="stepper-texto">2. Pasajeros</span>
+    </div>
+
+    <!-- Conector 2 -> 3 -->
+    <div class="stepper-linea-conector @(pasoActual > 2 ? "completada" : "")"></div>
+
+    <!-- Paso 3: Confirmación -->
+    <div class="stepper-paso-item @(pasoActual == 3 ? "activo" : (pasoActual > 3 ? "completado" : ""))">
+        <div class="stepper-circulo">
+            @if (pasoActual > 3)
+            {
+                <span>&#10003;</span>
+            }
+            else
+            {
+                <span>3</span>
+            }
+        </div>
+        <span class="stepper-texto">3. Confirmaci&oacute;n</span>
+    </div>
+
+    <!-- Conector 3 -> 4 -->
+    <div class="stepper-linea-conector @(pasoActual > 3 ? "completada" : "")"></div>
+
+    <!-- Paso 4: Pago -->
+    <div class="stepper-paso-item @(pasoActual == 4 ? "activo" : (pasoActual > 4 ? "completado" : ""))">
+        <div class="stepper-circulo">
+            @if (pasoActual > 4)
+            {
+                <span>&#10003;</span>
+            }
+            else
+            {
+                <span>4</span>
+            }
+        </div>
+        <span class="stepper-texto">4. Pago Simulado</span>
+    </div>
+</div>

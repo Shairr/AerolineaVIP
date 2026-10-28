@@ -1,0 +1,158 @@
+@model AerolineaVIP.Models.ConfirmacionCompraViewModel
+
+@{
+    ViewBag.Title = "¡Compra Exitosa! — Reserva " + Model.CodigoReserva;
+}
+
+<div class="container py-4">
+    <!-- Encabezado de la Pantalla 12 con Notificación de Éxito -->
+    <div class="card border-0 shadow-2 rounded-4 mb-4 text-center p-4 p-md-5" style="background: linear-gradient(180deg, var(--color-success-50) 0%, #FFFFFF 100%);">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success text-white mb-3" style="width: 72px; height: 72px; font-size: 36px;">
+            &#10003;
+        </div>
+        <div class="d-flex justify-content-center gap-2 mb-2">
+            <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 12</span>
+            <span class="badge bg-success text-white rounded-pill px-3 py-1">Pago Simulado Aprobado</span>
+        </div>
+        <h1 class="h2 fw-bold text-dark mb-2">
+            &iexcl;Su Vuelo Privado Est&aacute; Confirmado!
+        </h1>
+        <p class="text-secondary small max-w-700 mx-auto mb-4">
+            Hemos procesado exitosamente la reserva en la aeronave ejecutiva <strong>Embraer Phenom 300E</strong>. Se ha generado su c&oacute;digo oficial de reserva y los pases de abordar electr&oacute;nicos.
+        </p>
+
+        <!-- Bloque de Claves de la Transacción -->
+        <div class="row g-3 justify-content-center max-w-700 mx-auto">
+            <div class="col-sm-6">
+                <div class="p-3 border rounded-3 bg-white shadow-sm">
+                    <span class="small text-muted d-block">C&oacute;digo Oficial de Reserva</span>
+                    <strong class="h4 fw-bold text-danger text-uppercase mb-0">@Model.CodigoReserva</strong>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 border rounded-3 bg-white shadow-sm">
+                    <span class="small text-muted d-block">C&oacute;digo de Operaci&oacute;n Simulada</span>
+                    <strong class="h4 fw-bold text-dark font-monospace mb-0">@Model.CodigoOperacion</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fila con Datos de la Transacción e Itinerario -->
+    <div class="card card-avianca p-4 shadow-1 mb-4">
+        <div class="row gy-3">
+            <div class="col-md-3">
+                <span class="small text-muted d-block">Fecha y Hora de Emisi&oacute;n:</span>
+                <strong class="text-dark">@Model.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="small text-muted d-block">M&eacute;todo de Pago:</span>
+                <strong class="text-dark">@Model.MarcaTarjeta @Model.TarjetaEnmascarada</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="small text-muted d-block">Titular Autorizado:</span>
+                <strong class="text-dark">@Model.TitularTarjeta</strong>
+            </div>
+            <div class="col-md-3 text-md-end">
+                <span class="small text-muted d-block">Importe Total Liquidado:</span>
+                <strong class="h4 fw-bold text-danger mb-0">USD @Model.TotalPagado.ToString("N2")</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pases de Abordar / Boletos Emitidos para cada Pasajero -->
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 fw-bold text-dark mb-0">
+                Pases de Abordar Electr&oacute;nicos VIP (@Model.Pasajeros.Count emitidos)
+            </h2>
+            <span class="small text-muted">Presentar documento de identidad y este pase en sala ejecutiva</span>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var p in Model.Pasajeros)
+            {
+                <div class="col-lg-6">
+                    <div class="pase-abordar-card">
+                        <!-- Cabecera del Pase de Abordar -->
+                        <div class="pase-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-white text-danger fw-bold me-2">AEROL&Iacute;NEA VIP</span>
+                                <span class="small fw-semibold">BOARDING PASS</span>
+                            </div>
+                            <span class="fw-bold">@Model.AeronaveMatricula &bull; Phenom 300E</span>
+                        </div>
+
+                        <!-- Cuerpo del Pase -->
+                        <div class="pase-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="small text-muted d-block">Pasajero / Passenger</span>
+                                    <h3 class="h5 fw-bold text-dark mb-0">@p.Nombres @p.Apellidos</h3>
+                                    <span class="small text-secondary">Doc: @p.TipoDocumento @p.NumeroDocumento</span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="small text-muted d-block">Asiento / Seat</span>
+                                    <span class="badge bg-danger rounded-pill px-3 py-2 fs-5">
+                                        @p.AsientoAsignado
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Itinerario de Vuelo -->
+                            <div class="row align-items-center text-center my-3 gy-2">
+                                <div class="col-4 text-start">
+                                    <span class="h4 fw-bold text-dark d-block mb-0">@DateTime.Today.Add(Model.HoraSalida).ToString("HH:mm")</span>
+                                    <span class="badge bg-light text-dark border">@Model.OrigenCodigo</span>
+                                    <span class="small text-muted d-block">@Model.OrigenCiudad</span>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <span class="text-danger">&#9992;</span>
+                                    <span class="small text-muted d-block">Vuelo @Model.CodigoVuelo</span>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <span class="h4 fw-bold text-dark d-block mb-0">@DateTime.Today.Add(Model.HoraLlegada).ToString("HH:mm")</span>
+                                    <span class="badge bg-light text-dark border">@Model.DestinoCodigo</span>
+                                    <span class="small text-muted d-block">@Model.DestinoCiudad</span>
+                                </div>
+                            </div>
+
+                            <!-- Divisor punteado estilo boleto impreso -->
+                            <div class="pase-divisor-punteado"></div>
+
+                            <!-- Fila Inferior con QR y Sala VIP -->
+                            <div class="row align-items-center gy-2">
+                                <div class="col-7 small text-secondary">
+                                    <div>&#128197; <strong>Fecha:</strong> @Model.FechaOperacion.ToString("dd MMM yyyy")</div>
+                                    <div>&#127970; <strong>Sala de Espera:</strong> Hangar Privado VIP</div>
+                                    <div>&#9201; <strong>Embarque:</strong> 15 minutos antes del despegue</div>
+                                    <div>&#128092; <strong>Equipaje:</strong> 23 kg bodega + 10 kg mano</div>
+                                </div>
+                                <div class="col-5 text-center">
+                                    <div class="codigo-qr-mock mb-1" title="Código QR Digital"></div>
+                                    <span class="small text-muted font-monospace" style="font-size: 10px;">@Model.CodigoReserva-@p.AsientoAsignado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Botones de Acción Post-Compra -->
+    <div class="card card-avianca p-4 shadow-1 text-center">
+        <h4 class="h5 fw-bold text-dark mb-3">&iquest;Qu&eacute; desea hacer a continuaci&oacute;n?</h4>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-avianca-primary px-4 py-2">
+                &#9992; Reservar Otro Vuelo
+            </a>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary px-4 py-2">
+                Volver a la P&aacute;gina de Inicio
+            </a>
+            <button type="button" class="btn btn-outline-danger px-4 py-2" onclick="window.print();">
+                &#128424; Imprimir Boletos
+            </button>
+        </div>
+    </div>
+</div>

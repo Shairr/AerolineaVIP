@@ -1,0 +1,183 @@
+@model AerolineaVIP.Models.RegistroPasajerosViewModel
+
+@{
+    ViewBag.Title = "Paso 2: Datos de Pasajeros — Vuelo " + Model.CodigoVuelo;
+}
+
+<div class="container py-4">
+    <!-- Stepper de Progreso (Paso 2 Activo) -->
+    @Html.Partial("_PasosReserva", 2)
+
+    <!-- Encabezado de la Pantalla 9 -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 9</span>
+                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 2 de 4</span>
+                <span class="small text-muted">Vuelo @Model.CodigoVuelo &bull; @Model.OrigenCiudad &rarr; @Model.DestinoCiudad</span>
+            </div>
+            <h1 class="h2 fw-bold text-dark mb-0">
+                Informaci&oacute;n de Pasajeros
+            </h1>
+            <p class="text-secondary small mb-0">
+                Complete los datos personales y de contacto para la emisi&oacute;n reglamentaria de los boletos.
+            </p>
+        </div>
+
+        <div>
+            <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = Model.VueloId, tarifa = Model.TarifaSeleccionada, pasajeros = Model.Pasajeros.Count })" 
+               class="btn btn-outline-secondary btn-sm">
+                &larr; Volver a selecci&oacute;n de asientos
+            </a>
+        </div>
+    </div>
+
+    @using (Html.BeginForm("Pasajeros", "Reservas", FormMethod.Post, new { id = "formPasajeros" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.VueloId)
+        @Html.HiddenFor(m => m.CodigoVuelo)
+        @Html.HiddenFor(m => m.TarifaSeleccionada)
+        @Html.HiddenFor(m => m.PrecioUnitario)
+        @Html.HiddenFor(m => m.AsientosCodigos)
+        @Html.HiddenFor(m => m.Subtotal)
+        @Html.HiddenFor(m => m.OrigenCodigo)
+        @Html.HiddenFor(m => m.DestinoCodigo)
+
+        <div class="row g-4">
+            <!-- Columna Izquierda: Formularios Dinámicos por Pasajero -->
+            <div class="col-lg-8">
+                @for (int i = 0; i < Model.Pasajeros.Count; i++)
+                {
+                    @Html.HiddenFor(m => m.Pasajeros[i].Indice)
+                    @Html.HiddenFor(m => m.Pasajeros[i].AsientoAsignado)
+
+                    <div class="card card-avianca p-4 shadow-1 border mb-4">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-danger rounded-circle p-2 fs-6" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                                    @(i + 1)
+                                </span>
+                                <h3 class="h5 fw-bold text-dark mb-0">
+                                    Pasajero @(i + 1)
+                                </h3>
+                            </div>
+                            <span class="badge bg-light text-dark border px-3 py-2 fs-6">
+                                &#128186; Asiento Asignado: <strong>@Model.Pasajeros[i].AsientoAsignado</strong>
+                            </span>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Nombres y Apellidos -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark">Nombres Completos *</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Nombres, new { @class = "form-control", placeholder = "Ej: Carlos Roberto", required = "required" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Nombres, "", new { @class = "text-danger small" })
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark">Apellidos Completos *</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Apellidos, new { @class = "form-control", placeholder = "Ej: Mendoza Loor", required = "required" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Apellidos, "", new { @class = "text-danger small" })
+                            </div>
+
+                            <!-- Documento de Identidad -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-dark">Tipo Documento *</label>
+                                @Html.DropDownListFor(m => m.Pasajeros[i].TipoDocumento, new List<SelectListItem>
+                                {
+                                    new SelectListItem { Text = "Cédula de Identidad", Value = "CED", Selected = true },
+                                    new SelectListItem { Text = "Pasaporte", Value = "PAS" },
+                                    new SelectListItem { Text = "RUC", Value = "RUC" }
+                                }, new { @class = "form-select" })
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label small fw-bold text-dark">N&uacute;mero de Identificaci&oacute;n *</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].NumeroDocumento, new { @class = "form-control", placeholder = "Ej: 1719283746", required = "required" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].NumeroDocumento, "", new { @class = "text-danger small" })
+                            </div>
+
+                            <!-- Fecha de Nacimiento y Género -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark">Fecha de Nacimiento *</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].FechaNacimiento, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", required = "required" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].FechaNacimiento, "", new { @class = "text-danger small" })
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark">G&eacute;nero</label>
+                                @Html.DropDownListFor(m => m.Pasajeros[i].Genero, new List<SelectListItem>
+                                {
+                                    new SelectListItem { Text = "Masculino", Value = "M" },
+                                    new SelectListItem { Text = "Femenino", Value = "F" },
+                                    new SelectListItem { Text = "Otro", Value = "O" }
+                                }, new { @class = "form-select" })
+                            </div>
+
+                            <!-- Contacto -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark">Tel&eacute;fono de Contacto *</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Telefono, new { @class = "form-control", placeholder = "Ej: 0991234567", required = "required" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Telefono, "", new { @class = "text-danger small" })
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark">Correo Electr&oacute;nico *</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].Email, new { @class = "form-control", type = "email", placeholder = "correo@ejemplo.com", required = "required" })
+                                @Html.ValidationMessageFor(m => m.Pasajeros[i].Email, "", new { @class = "text-danger small" })
+                            </div>
+
+                            <!-- Requerimientos Especiales -->
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-dark">Requerimiento Especial o Preferencia VIP (Opcional)</label>
+                                @Html.TextBoxFor(m => m.Pasajeros[i].RequerimientoEspecial, new { @class = "form-control", placeholder = "Ej: Asistencia de movilidad, dieta vegetariana, copa de champagne de bienvenida" })
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Columna Derecha: Resumen Lateral -->
+            <div class="col-lg-4">
+                <div class="resumen-vuelo-sticky">
+                    <div class="card card-avianca p-4 shadow-2 border">
+                        <h4 class="h6 fw-bold border-bottom pb-2 mb-3 text-dark">Detalle del Viaje</h4>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-danger mb-1">Vuelo @Model.CodigoVuelo</span>
+                            <div class="fw-bold text-dark">@Model.OrigenCiudad &rarr; @Model.DestinoCiudad</div>
+                            <div class="small text-secondary">&#128197; @Model.FechaOperacion.ToString("dd MMM yyyy")</div>
+                        </div>
+
+                        <div class="card bg-light p-3 border rounded-3 mb-3">
+                            <div class="small fw-bold text-dark mb-1">Asientos Reservados:</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var cod in Model.AsientosCodigos.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    <span class="badge bg-danger rounded-pill px-2 py-1">&#128186; @cod</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span>Tarifa @Model.TarifaSeleccionada:</span>
+                                <span>USD @Model.PrecioUnitario.ToString("N2")</span>
+                            </div>
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span>Pasajeros:</span>
+                                <span>&times; @Model.Pasajeros.Count</span>
+                            </div>
+                            <hr class="my-2" />
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark">Subtotal:</span>
+                                <span class="h4 fw-bold text-danger mb-0">USD @Model.Subtotal.ToString("N2")</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-avianca-primary w-100 py-3 fw-bold">
+                            Revisar Reserva y Tarifas (Paso 3) &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

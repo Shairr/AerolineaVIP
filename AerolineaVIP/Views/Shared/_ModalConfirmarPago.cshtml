@@ -1,0 +1,58 @@
+@model AerolineaVIP.Models.PagoSimuladoViewModel
+
+<!-- Modal Bootstrap 5 para confirmación explícita de simulación de pago -->
+<div class="modal fade" id="modalConfirmarPago" tabindex="-1" aria-labelledby="modalConfirmarPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-3 rounded-4">
+            <div class="modal-header bg-avianca text-white py-3">
+                <h5 class="modal-title h6 fw-bold mb-0 d-flex align-items-center gap-2" id="modalConfirmarPagoLabel">
+                    <span class="fs-5">&#128274;</span> Autorizaci&oacute;n de Pago Simulado
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <span class="badge bg-danger rounded-pill px-3 py-1 mb-2">Simulaci&oacute;n Acad&eacute;mica</span>
+                    <h3 class="h2 fw-bold text-danger mb-0" id="modalTotalPagar">
+                        USD @(Model != null ? Model.TotalPagar.ToString("N2") : "0.00")
+                    </h3>
+                    <p class="small text-muted mb-0">Total a procesar en la operaci&oacute;n</p>
+                </div>
+
+                <div class="card bg-light p-3 border rounded-3 mb-3">
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>C&oacute;digo Pre-Reserva:</span>
+                        <strong class="text-dark">@(Model?.CodigoPreReserva ?? "PRE-84920")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Vuelo:</span>
+                        <strong class="text-dark">@(Model?.CodigoVuelo ?? "VIP00001") (@(Model?.OrigenCodigo) &rarr; @(Model?.DestinoCodigo))</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Titular:</span>
+                        <strong class="text-dark" id="modalTitular">@(Model?.TitularTarjeta ?? "CARLOS ROBERTO MENDOZA")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>M&eacute;todo:</span>
+                        <strong class="text-dark" id="modalTarjeta">@(Model?.MarcaTarjeta ?? "VISA") &bull;&bull;&bull;&bull; 9010</strong>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning border-0 small d-flex align-items-start gap-2 mb-0" style="background-color: var(--color-warning-50); color: var(--color-warning-600);">
+                    <span class="fs-5">&#9888;</span>
+                    <div>
+                        <strong>Aviso Acad&eacute;mico:</strong> Al presionar confirmar, el sistema simular&aacute; la aprobaci&oacute;n bancaria instant&aacute;nea y emitir&aacute; los pases de abordar de demostraci&oacute;n sin interactuar con pasarelas de pago reales.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top p-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">
+                    Volver y editar
+                </button>
+                <button type="button" class="btn btn-avianca-primary px-4" id="btnEjecutarPagoSubmit">
+                    Confirmar Transacci&oacute;n &rarr;
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
