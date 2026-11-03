@@ -62,6 +62,8 @@ namespace AerolineaVIP.Models
         public bool RememberMe { get; set; }
     }
 
+    //// Código Antiguo
+
     public class RegisterViewModel
     {
         [Required]
@@ -80,6 +82,7 @@ namespace AerolineaVIP.Models
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
     }
+
 
     public class ResetPasswordViewModel
     {
