@@ -38,7 +38,8 @@ namespace AerolineaVIP
             };
 
             // 1. Requisito 4: Creación de los 3 roles oficiales por código
-            string[] roles = { "SuperUsuario", "Administrador", "Cliente" };
+            // Creación del nuevo rol: Counter
+            string[] roles = { "SuperUsuario", "Administrador", "Cliente", "Counter" };
             foreach (var rol in roles)
             {
                 if (!gestorRoles.RoleExists(rol))
@@ -55,6 +56,10 @@ namespace AerolineaVIP
 
             // 4. Requisitos 5 y 6: Creación del Cliente inicial por código
             CrearUsuarioSiNoExiste(gestorUsuarios, "cliente01", "cliente@aerolineavip.com", "Cliente123*", "Cliente");
+
+            // 5. Creación del Counter inicial por código
+            CrearUsuarioSiNoExiste(gestorUsuarios, "counter01", "counter@aerolineavip.com", "Counter123*", "Counter");
+
         }
 
         private void CrearUsuarioSiNoExiste(UserManager<ApplicationUser> gestorUsuarios, string nombreUsuario, string correo, string contrasena, string rol)

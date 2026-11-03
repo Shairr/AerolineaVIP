@@ -1,0 +1,214 @@
+﻿@model List<AerolineaVIP.Models.Reserva>
+@{
+    ViewBag.Title = "Asistencia y Mostrador de Counter";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var vuelos = ViewBag.Vuelos as List<AerolineaVIP.Models.Vuelo> ?? new List<AerolineaVIP.Models.Vuelo>();
+    string busqueda = ViewBag.Busqueda as string;
+    string fecha = ViewBag.Fecha as string;
+}
+
+<div class="my-4">
+    <!-- Mensajes de Notificación -->
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <span>@TempData["MensajeExito"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+            <span>@TempData["MensajeError"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    <!-- Encabezado de Counter -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 border-bottom pb-3">
+        <div>
+            <span class="badge bg-warning text-dark fw-bold px-3 py-1 rounded-pill mb-1">MÓDULO MOD-09 · ATENCIÓN EN COUNTER</span>
+            <h1 class="h3 fw-bold text-dark mb-0">Central de Asistencia y Mostrador VIP</h1>
+            <p class="text-muted small mb-0">Consulta autorizada de reservas, verificación de pasajeros y check-in presencial</p>
+        </div>
+        <div class="text-end">
+            <span class="small text-muted d-block">Operador Actual:</span>
+            <span class="badge bg-dark px-3 py-2">@User.Identity.Name</span>
+        </div>
+    </div>
+
+    <!-- Buscador Rápido de Reservas y Pasajeros -->
+    <div class="card card-avianca p-4 shadow-1 mb-4">
+        <h4 class="h6 fw-bold text-dark mb-3">Buscar Reserva o Pasajero</h4>
+        @using (Html.BeginForm("Index", "Counter", FormMethod.Get, new { @class = "row g-3" }))
+        {
+            <div class="col-12 col-md-8">
+                <input type="text" name="busqueda" value="@busqueda" class="form-control" placeholder="Ingrese Código de Reserva (ej. VIP-12345), Cédula o Apellido..." />
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-avianca-primary flex-grow-1">
+                    Buscar en Sistema
+                </button>
+                @if (!string.IsNullOrEmpty(busqueda))
+                {
+                    <a href="@Url.Action("Index", "Counter")" class="btn btn-outline-secondary">Limpiar</a>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Resultados de Búsqueda de Reservas -->
+    @if (!string.IsNullOrWhiteSpace(busqueda))
+    {
+        <div class="card card-avianca p-4 shadow-1 mb-4">
+            <h4 class="h5 fw-bold text-dark mb-3">Reservas Encontradas (@Model.Count)</h4>
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info small mb-0">
+                    No se encontraron reservas que coincidan con el término "<strong>@busqueda</strong>".
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small">
+                            <tr>
+                                <th>Código</th>
+                                <th>Fecha</th>
+                                <th>Pasajeros / Asiento</th>
+                                <th>Ruta</th>
+                                <th>Estado</th>
+                                <th class="text-end">Acción de Counter</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold font-monospace text-danger">@r.CodigoReserva</td>
+                                    <td class="small">@r.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @foreach (var asignacion in r.ReservaPasajeroVueloes)
+                                        {
+                                            <div class="small mb-1">
+                                                <strong>@(asignacion.Pasajero?.Nombres) @(asignacion.Pasajero?.Apellidos)</strong>
+                                                <span class="badge bg-light text-dark border ms-1">Asiento @asignacion.NumeroAsiento</span>
+                                                <span class="text-muted font-monospace">(@asignacion.Pasajero?.NumeroDocumento)</span>
+                                                @if (asignacion.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
+                                                {
+                                                    <span class="badge bg-success ms-1">Check-in OK</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary ms-1">Pendiente</span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="small">
+                                        @{
+                                            var primerVuelo = r.ReservaPasajeroVueloes.FirstOrDefault()?.Vuelo;
+                                        }
+                                        @(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA) &rarr; @(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA)
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@(r.EstadoReservaCodigo == "CONFIRMADA" ? "success" : "warning")">
+                                            @r.EstadoReservaCodigo
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        @foreach (var asignacion in r.ReservaPasajeroVueloes)
+                                        {
+                                            if (!asignacion.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
+                                            {
+                                                using (Html.BeginForm("AsistirCheckIn", "Counter", FormMethod.Post, new { @class = "d-inline-block my-1" }))
+                                                {
+                                                    @Html.AntiForgeryToken()
+                                                    @Html.Hidden("reservaId", r.ReservaId)
+                                                    @Html.Hidden("pasajeroId", asignacion.PasajeroId)
+                                                    @Html.Hidden("vueloId", asignacion.VueloId)
+                                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                                        Asistir Check-in (Asiento @asignacion.NumeroAsiento)
+                                                    </button>
+                                                }
+                                            }
+                                        }
+                                        <a href="@Url.Action("Comprobante", "Reservas", new { id = r.ReservaId })" class="btn btn-sm btn-outline-dark" target="_blank">
+                                            Ver Comprobante
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Panel de Vuelos del Día para Control Operativo -->
+    <div class="card card-avianca p-4 shadow-1">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h4 class="h5 fw-bold text-dark mb-0">Programación de Vuelos del Día</h4>
+            @using (Html.BeginForm("Index", "Counter", FormMethod.Get, new { @class = "d-flex align-items-center gap-2" }))
+            {
+                <label class="small text-muted fw-bold mb-0">Fecha:</label>
+                <input type="date" name="fecha" value="@fecha" class="form-control form-control-sm" onchange="this.form.submit()" />
+            }
+        </div>
+
+        @if (!vuelos.Any())
+        {
+            <p class="text-muted small mb-0">No hay vuelos programados para la fecha seleccionada (@fecha).</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Vuelo</th>
+                            <th>Ruta</th>
+                            <th>Salida / Llegada</th>
+                            <th>Aeronave</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in vuelos)
+                        {
+                            <tr>
+                                <td class="fw-bold font-monospace">VIP@(v.VueloId.ToString("D5"))</td>
+                                <td>
+                                    <strong>@v.Frecuencia.Ruta.Aeropuerto.Localidad (@v.Frecuencia.Ruta.Aeropuerto.CodigoIATA)</strong>
+                                    &rarr;
+                                    <strong>@v.Frecuencia.Ruta.Aeropuerto1.Localidad (@v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA)</strong>
+                                </td>
+                                <td class="small">
+                                    @(v.Frecuencia.HoraSalida.ToString(@"hh\:mm")) - @(v.Frecuencia.HoraLlegada.ToString(@"hh\:mm"))
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        @(v.Aeronave?.Matricula ?? "Sin asignar") (@(v.Aeronave?.ModeloAeronave?.Nombre ?? "Phenom 300E"))
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">@(v.EstadoVuelo?.Descripcion ?? v.EstadoVueloCodigo)</span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = v.VueloId })" class="btn btn-sm btn-avianca-outline-sm">
+                                        Ver Asientos Cabina
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

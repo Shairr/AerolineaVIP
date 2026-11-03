@@ -43,11 +43,21 @@
                     @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
                 </div>
 
+                @*<div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input" })
+                    <label class="form-check-label small" for="RememberMe">Recordarme</label>
+                </div>
+            </div>*@
+
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="form-check">
                         @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input" })
                         <label class="form-check-label small" for="RememberMe">Recordarme</label>
                     </div>
+                    <a href="@Url.Action("ForgotPassword", "Account")" class="small text-danger text-decoration-none fw-semibold">
+                        ¿Olvidaste tu contraseña?
+                    </a>
                 </div>
 
                 <button type="submit" class="btn btn-avianca-primary w-100 mb-3">

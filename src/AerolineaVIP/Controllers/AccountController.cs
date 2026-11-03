@@ -179,6 +179,7 @@ namespace AerolineaVIP.Controllers
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+
                     // REGLA DE SEGURIDAD ESTRICTA:
                     // Todo visitante público registrado desde la web recibe siempre el rol Cliente.
                     string rolAsignado = "Cliente";

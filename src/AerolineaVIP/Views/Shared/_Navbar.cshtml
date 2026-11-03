@@ -58,46 +58,59 @@
                             </li>
                         }
 
-                        if (User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
+
+
+                        if (User.IsInRole("Counter") || User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
-                                   href="@Url.Action("Index", "Admin", new { area = "" })">
-                                    Panel Admin
+                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Counter" ? "active" : "")"
+                                   href="@Url.Action("Index", "Counter", new { area = "" })">
+                                    Atención Counter
                                 </a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link-avianca dropdown-toggle" href="#" id="adminDropdown" role="button"
-                                   data-bs-toggle="dropdown" aria-expanded="false">
-                                    Gestión Operativa
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-avianca" aria-labelledby="adminDropdown">
-                                    <li>
-                                        <a class="dropdown-item-avianca" href="@Url.Action("Index", "VuelosAdmin", new { area = "" })">
-                                            Vuelos Programados
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item-avianca" href="@Url.Action("Index", "AeronavesAdmin", new { area = "" })">
-                                            Flota Phenom 300E
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item-avianca" href="@Url.Action("Index", "PasajerosAdmin", new { area = "" })">
-                                            Pasajeros Registrados
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider-avianca" /></li>
-                                    <li>
-                                        <a class="dropdown-item-avianca" href="@Url.Action("Reportes", "Admin", new { area = "" })">
-                                            Reportes Ejecutivos
-                                        </a>
-                                    </li>
-                                </ul>
                             </li>
                         }
-                    }
-                </ul>
+
+
+                        if (User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
+                        {
+                                <li class="nav-item">
+                                    <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                                       href="@Url.Action("Index", "Admin", new { area = "" })">
+                                        Panel Admin
+                                    </a>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link-avianca dropdown-toggle" href="#" id="adminDropdown" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        Gestión Operativa
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-avianca" aria-labelledby="adminDropdown">
+                                        <li>
+                                            <a class="dropdown-item-avianca" href="@Url.Action("Index", "VuelosAdmin", new { area = "" })">
+                                                Vuelos Programados
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item-avianca" href="@Url.Action("Index", "AeronavesAdmin", new { area = "" })">
+                                                Flota Phenom 300E
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item-avianca" href="@Url.Action("Index", "PasajerosAdmin", new { area = "" })">
+                                                Pasajeros Registrados
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider-avianca" /></li>
+                                        <li>
+                                            <a class="dropdown-item-avianca" href="@Url.Action("Reportes", "Admin", new { area = "" })">
+                                                Reportes Ejecutivos
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+                        }
+                    </ul>
 
                 <!-- Acciones de Cuenta / Perfil -->
                 <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
@@ -115,6 +128,10 @@
                             {
                                 <span class="badge-role badge-role-administrador">Admin</span>
                             }
+                            else if (User.IsInRole("Counter"))
+                            {
+                                <span class="badge-role bg-warning text-dark border border-warning">Counter</span>
+                            }
                             else if (User.IsInRole("Cliente"))
                             {
                                 <span class="badge-role badge-role-cliente">Cliente VIP</span>
@@ -122,18 +139,18 @@
 
                             <div class="dropdown">
                                 <button class="btn btn-avianca-outline-sm dropdown-toggle" type="button" id="userMenuBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                                     @User.Identity.GetUserName()
+                                    @User.Identity.GetUserName()
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-avianca" aria-labelledby="userMenuBtn">
                                     <li>
                                         <a class="dropdown-item-avianca" href="@Url.Action("Index", "Manage", new { area = "" })">
-                                             Mi Cuenta
+                                            Mi Cuenta
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider-avianca" /></li>
                                     <li>
                                         <a class="dropdown-item-avianca text-danger" href="javascript:document.getElementById('logoutForm').submit();">
-                                             Cerrar Sesión
+                                            Cerrar Sesión
                                         </a>
                                     </li>
                                 </ul>
