@@ -15,7 +15,7 @@
                 <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 8</span>
                 <span class="badge bg-dark rounded-pill px-3 py-1">Paso 1 de 4</span>
                 <span class="badge bg-light text-dark border">Vuelo @Model.CodigoVuelo &bull; @Model.FechaOperacion.ToString("dd MMM yyyy")</span>
-                <span class="small text-muted ms-1">Aeronave Oficial: Phenom 300E</span>
+                <span class="small text-muted ms-1">Aeronave Oficial: Phenom 300E (7 plazas)</span>
             </div>
             <h1 class="h2 fw-bold text-dark mb-0">
                 Selecci&oacute;n de Asientos en Cabina
@@ -55,7 +55,7 @@
 
                     <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-3">
                         <span>&#128161;</span>
-                        <span>Seleccione exactamente <strong>@Model.CantidadPasajeros</strong> asiento(s) para habilitar el siguiente paso.</span>
+                        <span>Seleccione exactamente <strong>@Model.CantidadPasajeros</strong> asiento(s) disponible(s) en verde para habilitar el siguiente paso.</span>
                     </div>
 
                     @Html.ValidationMessageFor(m => m.AsientosSeleccionados, "", new { @class = "text-danger fw-bold small d-block mb-3" })
@@ -136,13 +136,12 @@
             var maxSeleccionables = @Model.CantidadPasajeros;
             var asientosSeleccionados = [];
 
-            // Leer valor previo si existe
             var inicial = $("#inputAsientosSeleccionados").val();
             if (inicial) {
                 asientosSeleccionados = inicial.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
             }
 
-            // Descartar de la selecciÃ³n cualquier asiento que estÃ© ocupado o reservado
+            // Descartar de la selección cualquier asiento que esté ocupado o reservado
             asientosSeleccionados = asientosSeleccionados.filter(function (cod) {
                 var btn = $(".asiento-boton[data-codigo='" + cod + "']");
                 return btn.length > 0 && btn.data("estado") === "DISPONIBLE";
@@ -150,20 +149,16 @@
 
             actualizarEstadoVisual();
 
-            // Interacción con los botones de asientos disponibles
             $(".asiento-disponible").on("click", function () {
                 var codigo = $(this).data("codigo");
                 var index = asientosSeleccionados.indexOf(codigo);
 
                 if (index > -1) {
-                    // Deseleccionar
                     asientosSeleccionados.splice(index, 1);
                 } else {
-                    // Seleccionar
                     if (asientosSeleccionados.length < maxSeleccionables) {
                         asientosSeleccionados.push(codigo);
                     } else if (maxSeleccionables === 1) {
-                        // Reemplazar asiento único
                         asientosSeleccionados = [codigo];
                     } else {
                         alert("Solo puede seleccionar un máximo de " + maxSeleccionables + " asiento(s) para esta reserva.");
@@ -175,7 +170,6 @@
             });
 
             function actualizarEstadoVisual() {
-                // Actualizar clases en los botones de cabina
                 $(".asiento-boton").each(function () {
                     var cod = $(this).data("codigo");
                     var estado = $(this).data("estado");
@@ -191,11 +185,9 @@
                     }
                 });
 
-                // Guardar en input oculto
                 var valorString = asientosSeleccionados.join(', ');
                 $("#inputAsientosSeleccionados").val(valorString);
 
-                // Actualizar panel lateral
                 $("#contadorSeleccionados").text(asientosSeleccionados.length);
 
                 if (asientosSeleccionados.length > 0) {
@@ -209,7 +201,6 @@
                     $("#contenedorChipsAsientos").html('<span class="small text-muted fst-italic" id="textoSinAsientos">Ningún asiento seleccionado aún.</span>');
                 }
 
-                // Habilitar o deshabilitar botón Continuar
                 if (asientosSeleccionados.length === maxSeleccionables) {
                     $("#btnContinuarPaso2").removeAttr("disabled");
                 } else {

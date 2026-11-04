@@ -1,4 +1,4 @@
-﻿@using AerolineaVIP.Models
+@using AerolineaVIP.Models
 @model LoginViewModel
 @{
     ViewBag.Title = "Iniciar Sesión";
@@ -21,8 +21,7 @@
             @if (!string.IsNullOrEmpty(ViewBag.ReturnUrl as string) && (ViewBag.ReturnUrl as string).IndexOf("Reservas", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 <div class="alert alert-info py-2 px-3 rounded-3 small mb-3 border-0 shadow-sm" style="background-color: #E8F4FD; border-left: 4px solid #0B5CAD !important;">
-                    <i class="bi bi-person-lock me-1 text-primary"></i>
-                    <strong>Inicio de sesiÃ³n requerido:</strong> Ingrese a su cuenta para continuar con la reserva de su vuelo y selecciÃ³n de asientos.
+                    <strong>Inicio de sesión requerido:</strong> Ingrese a su cuenta para continuar con la reserva de su vuelo y selección de asientos.
                 </div>
             }
 
@@ -33,7 +32,7 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Usuario o Correo Electrónico</label>
-                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Ej. admin01 o usuario@correo.com", autofocus = "autofocus" })
+                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Ej. admin01, counter01 o cliente@aerolineavip.com", autofocus = "autofocus" })
                     @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
                 </div>
 
@@ -42,13 +41,6 @@
                     @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "••••••••" })
                     @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
                 </div>
-
-                @*<div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="form-check">
-                    @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input" })
-                    <label class="form-check-label small" for="RememberMe">Recordarme</label>
-                </div>
-            </div>*@
 
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="form-check">

@@ -1,57 +1,48 @@
-﻿@model AerolineaVIP.Models.Aeronave
-
+@model AerolineaVIP.Models.Aeronave
 @{
-    ViewBag.Title = "Create";
+    ViewBag.Title = "Registrar Nueva Aeronave (Pantalla 19)";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Create</h2>
-
-
-@using (Html.BeginForm()) 
-{
-    @Html.AntiForgeryToken()
-    
-    <div class="form-horizontal">
-        <h4>Aeronave</h4>
-        <hr />
-        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-        <div class="form-group">
-            @Html.LabelFor(model => model.Matricula, htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.EditorFor(model => model.Matricula, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.Matricula, "", new { @class = "text-danger" })
+<div class="container my-4">
+    <div class="card card-avianca p-4 shadow-1 border mx-auto" style="max-width: 680px;">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+            <div>
+                <span class="badge bg-danger rounded-pill px-3 py-1 mb-1">Pantalla 19 &bull; Flota VIP</span>
+                <h2 class="h4 fw-bold text-dark mb-0">Registrar Nueva Aeronave</h2>
             </div>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">&larr; Volver</a>
         </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.ModeloAeronaveId, "ModeloAeronaveId", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.DropDownList("ModeloAeronaveId", null, htmlAttributes: new { @class = "form-control" })
-                @Html.ValidationMessageFor(model => model.ModeloAeronaveId, "", new { @class = "text-danger" })
-            </div>
-        </div>
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+            @Html.ValidationSummary(false, "", new { @class = "text-danger small fw-semibold mb-3" })
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.EstadoAeronaveCodigo, "EstadoAeronaveCodigo", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.DropDownList("EstadoAeronaveCodigo", null, htmlAttributes: new { @class = "form-control" })
-                @Html.ValidationMessageFor(model => model.EstadoAeronaveCodigo, "", new { @class = "text-danger" })
-            </div>
-        </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-dark">Matr&iacute;cula Oficial *</label>
+                    @Html.TextBoxFor(m => m.Matricula, new { @class = "form-control text-uppercase font-monospace", placeholder = "Ej: AV-04 o HC-VIP4", maxlength = "15", required = "required" })
+                    @Html.ValidationMessageFor(m => m.Matricula, "", new { @class = "text-danger small" })
+                </div>
 
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Create" class="btn btn-default" />
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-dark">Estado Operativo (RNP-08) *</label>
+                    @Html.DropDownList("EstadoAeronaveCodigo", null, new { @class = "form-select" })
+                    @Html.ValidationMessageFor(m => m.EstadoAeronaveCodigo, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-bold text-dark">Modelo de Aeronave Homologado *</label>
+                    @Html.DropDownList("ModeloAeronaveId", null, new { @class = "form-select" })
+                    @Html.ValidationMessageFor(m => m.ModeloAeronaveId, "", new { @class = "text-danger small" })
+                </div>
             </div>
-        </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                <button type="submit" class="btn btn-avianca-primary rounded-pill px-4">Guardar Aeronave</button>
+            </div>
+        }
     </div>
-}
-
-<div>
-    @Html.ActionLink("Back to List", "Index")
 </div>
-
-@section Scripts {
-    @Scripts.Render("~/bundles/jqueryval")
-}

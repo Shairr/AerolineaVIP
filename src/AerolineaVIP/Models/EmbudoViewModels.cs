@@ -18,6 +18,7 @@ namespace AerolineaVIP.Models
         public string ColorEstado { get; set; }    // Verde, Morado, Rojo
         public bool EsSeleccionado { get; set; }
         public bool EsAccesible { get; set; } = true;
+        public bool TieneCheckIn { get; set; }
     }
 
     /// <summary>
@@ -116,7 +117,7 @@ namespace AerolineaVIP.Models
 
         [Required(ErrorMessage = "Seleccione el tipo de documento")]
         [Display(Name = "Tipo de documento")]
-        public string TipoDocumento { get; set; } = "CED"; // CED, PAS, RUC
+        public string TipoDocumento { get; set; } = "CEDULA"; // CEDULA, PASAPORTE
 
         [Required(ErrorMessage = "El número de documento es obligatorio")]
         [Display(Name = "Número de identificación")]
@@ -172,10 +173,11 @@ namespace AerolineaVIP.Models
     }
 
     /// <summary>
-    /// Pantalla 10 (Paso 3): Resumen y confirmación de reserva previa a pago
+    /// Pantalla 10 (Paso 3): Resumen y confirmación de reserva previa a pago (DP-07: 20 min retención)
     /// </summary>
     public class ResumenReservaViewModel
     {
+        public int? ReservaId { get; set; }
         public string CodigoPreReserva { get; set; }
         public int VueloId { get; set; }
         public string CodigoVuelo { get; set; }
@@ -200,14 +202,16 @@ namespace AerolineaVIP.Models
         public decimal IvaMonto { get; set; } // 15% IVA Ecuador
         public decimal TotalPagar { get; set; }
 
-        public int MinutosRetencion { get; set; } = 15;
+        public int MinutosRetencion { get; set; } = 20;
+        public DateTime? FechaExpiracion { get; set; }
     }
 
     /// <summary>
-    /// Pantalla 11 (Paso 4): Pasarela de pago seguro con tarjeta
+    /// Pantalla 11 (Paso 4): Pasarela de pago simulado con tarjeta (DP-06)
     /// </summary>
     public class PagoSimuladoViewModel
     {
+        public int? ReservaId { get; set; }
         public string CodigoPreReserva { get; set; }
         public int VueloId { get; set; }
         public string CodigoVuelo { get; set; }
@@ -219,9 +223,13 @@ namespace AerolineaVIP.Models
         public int CantidadPasajeros { get; set; }
         public string AsientosCodigos { get; set; }
 
+        [Required(ErrorMessage = "Seleccione el método de pago")]
+        [Display(Name = "Método de pago")]
+        public string MetodoPago { get; set; } = "TARJETA_CREDITO"; // TARJETA_CREDITO, TARJETA_DEBITO
+
         [Required(ErrorMessage = "Seleccione la marca de tarjeta")]
         [Display(Name = "Marca de tarjeta")]
-        public string MarcaTarjeta { get; set; } = "VISA"; // VISA, MC, AMEX, DINERS
+        public string MarcaTarjeta { get; set; } = "VISA"; // VISA, MASTERCARD, AMEX, DINERS
 
         [Required(ErrorMessage = "Ingrese el nombre del titular como figura en la tarjeta")]
         [StringLength(50, MinimumLength = 5, ErrorMessage = "El nombre del titular debe contener entre 5 y 50 caracteres")]
@@ -249,6 +257,8 @@ namespace AerolineaVIP.Models
         [Range(typeof(bool), "true", "true", ErrorMessage = "Debe aceptar los términos de la transacción")]
         [Display(Name = "Acepto los términos y condiciones de la compra del pasaje.")]
         public bool AceptoTerminos { get; set; }
+
+        public string MensajeRechazo { get; set; }
     }
 
     /// <summary>
@@ -256,8 +266,11 @@ namespace AerolineaVIP.Models
     /// </summary>
     public class ConfirmacionCompraViewModel
     {
-        public string CodigoReserva { get; set; } // Ej: VIP-74829
-        public string CodigoOperacion { get; set; } // Ej: SIM-938210
+        public int? ReservaId { get; set; }
+        public string CodigoReserva { get; set; } // Ej: RV000013
+        public string CodigoOperacion { get; set; } // Ej: SIM-RV000013-01
+        public string NumeroComprobanteConfirmacion { get; set; } // Ej: CNF-000011
+        public string NumeroComprobanteFactura { get; set; } // Ej: ACAD-000011
         public DateTime FechaCompra { get; set; } = DateTime.Now;
 
         public int VueloId { get; set; }
@@ -272,6 +285,7 @@ namespace AerolineaVIP.Models
         public string AeronaveMatricula { get; set; }
         public string TarifaSeleccionada { get; set; }
         public decimal TotalPagado { get; set; }
+        public string MetodoPago { get; set; } = "TARJETA_CREDITO";
         public string MarcaTarjeta { get; set; }
         public string TarjetaEnmascarada { get; set; }
         public string TitularTarjeta { get; set; }

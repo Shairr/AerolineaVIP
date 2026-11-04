@@ -1,76 +1,347 @@
-﻿@model IEnumerable<AerolineaVIP.Models.Pasajero>
-
+﻿@model AerolineaVIP.Models.AdminGestionIntegralViewModel
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Pantalla 20: Gestión de Usuarios, Pasajeros y Reservas";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+<div class="my-4">
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span>@TempData["MensajeExito"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span>@TempData["MensajeError"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
-<table class="table">
-    <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.NumeroDocumento)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Nombres)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Apellidos)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.FechaNacimiento)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Correo)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Telefono)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.FechaRegistro)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.TipoDocumentoIdentidad.Descripcion)
-        </th>
-        <th></th>
-    </tr>
+    <!-- Encabezado de la Pantalla 20 -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 border-bottom pb-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 20</span>
+                <span class="badge bg-dark rounded-pill px-3 py-1">MOD-10 &bull; Administraci&oacute;n Integral</span>
+            </div>
+            <h1 class="h3 fw-bold text-dark mb-0">Gesti&oacute;n de Usuarios, Pasajeros y Reservas</h1>
+            <p class="text-muted small mb-0">Administraci&oacute;n centralizada con control de acceso por roles (<code>SuperUsuario</code> y <code>Administrador</code> conforme a RN-02).</p>
+        </div>
+        <div>
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                &larr; Panel Admin (Pantalla 17)
+            </a>
+        </div>
+    </div>
 
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.NumeroDocumento)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Nombres)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Apellidos)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.FechaNacimiento)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Correo)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Telefono)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.FechaRegistro)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.TipoDocumentoIdentidad.Descripcion)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.PasajeroId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.PasajeroId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.PasajeroId })
-        </td>
-    </tr>
-}
+    <!-- Pestañas de Navegación (Usuarios y Roles | Pasajeros | Reservas) -->
+    <ul class="nav nav-pills mb-4 gap-2">
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4 fw-bold @(Model.TabActiva == "usuarios" ? "active bg-danger text-white" : "text-dark bg-light")"
+               href="@Url.Action("Index", "PasajerosAdmin", new { tab = "usuarios" })">
+                &#128100; 1. Usuarios y Roles (@Model.Usuarios.Count)
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4 fw-bold @(Model.TabActiva == "pasajeros" ? "active bg-danger text-white" : "text-dark bg-light")"
+               href="@Url.Action("Index", "PasajerosAdmin", new { tab = "pasajeros" })">
+                &#128101; 2. Pasajeros (@Model.Pasajeros.Count)
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4 fw-bold @(Model.TabActiva == "reservas" ? "active bg-danger text-white" : "text-dark bg-light")"
+               href="@Url.Action("Index", "PasajerosAdmin", new { tab = "reservas" })">
+                &#127915; 3. Reservas (@Model.Reservas.Count)
+            </a>
+        </li>
+    </ul>
 
-</table>
+    <!-- =========================================================================
+         TAB 1: USUARIOS Y ROLES (RN-02: Solo SuperUsuario modifica roles/usuarios)
+         ========================================================================= -->
+    @if (Model.TabActiva == "usuarios")
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card card-avianca p-4 shadow-1 border">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h5 fw-bold text-dark mb-0">Cuentas de Usuario en ASP.NET Identity</h3>
+                        @if (Model.EsSuperUsuario)
+                        {
+                            <span class="badge bg-danger">Modo SuperUsuario: Edici&oacute;n de Roles Habilitada (RN-02)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Modo Administrador: Solo Lectura en Roles (RN-02)</span>
+                        }
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle small mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Correo Electr&oacute;nico</th>
+                                    <th>Rol Asignado</th>
+                                    <th>Estado</th>
+                                    @if (Model.EsSuperUsuario)
+                                    {
+                                        <th class="text-end">Gesti&oacute;n de Rol y Estado (SuperUsuario)</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var u in Model.Usuarios)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-dark">@u.UserName</td>
+                                        <td>@u.Email</td>
+                                        <td>
+                                            <span class="badge @(u.RolActual == "SuperUsuario" ? "bg-danger" : (u.RolActual == "Administrador" ? "bg-dark" : (u.RolActual == "Counter" ? "bg-warning text-dark" : "bg-primary")))">
+                                                @u.RolActual
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (u.EstaActivo)
+                                            {
+                                                <span class="badge bg-success-subtle text-success">Activo</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger">Bloqueado</span>
+                                            }
+                                        </td>
+                                        @if (Model.EsSuperUsuario)
+                                        {
+                                            <td class="text-end">
+                                                <div class="d-inline-flex align-items-center gap-1">
+                                                    @using (Html.BeginForm("CambiarRolUsuario", "PasajerosAdmin", FormMethod.Post, new { @class = "d-inline-flex gap-1" }))
+                                                    {
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="usuarioId" value="@u.UsuarioId" />
+                                                        <select name="nuevoRol" class="form-select form-select-sm py-0 px-2" style="width: 135px; font-size: 11px;">
+                                                            <option value="SuperUsuario" @(u.RolActual == "SuperUsuario" ? "selected" : "")>SuperUsuario</option>
+                                                            <option value="Administrador" @(u.RolActual == "Administrador" ? "selected" : "")>Administrador</option>
+                                                            <option value="Counter" @(u.RolActual == "Counter" ? "selected" : "")>Counter</option>
+                                                            <option value="Cliente" @(u.RolActual == "Cliente" ? "selected" : "")>Cliente</option>
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 11px;">Guardar Rol</button>
+                                                    }
+
+                                                    @using (Html.BeginForm("AlternarEstadoUsuario", "PasajerosAdmin", FormMethod.Post, new { @class = "d-inline" }))
+                                                    {
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="usuarioId" value="@u.UsuarioId" />
+                                                        <button type="submit" class="btn btn-sm @(u.EstaActivo ? "btn-outline-secondary" : "btn-outline-success") py-0 px-2" style="font-size: 11px;">
+                                                            @(u.EstaActivo ? "Bloquear" : "Activar")
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card card-avianca p-4 shadow-1 border">
+                    <h4 class="h6 fw-bold text-dark border-bottom pb-2 mb-3">Crear Nuevo Usuario Interno (RN-02)</h4>
+                    @if (Model.EsSuperUsuario)
+                    {
+                        using (Html.BeginForm("CrearUsuarioInterno", "PasajerosAdmin", FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Nombre de Usuario *</label>
+                                <input type="text" name="userName" class="form-control form-control-sm" placeholder="Ej: counter02" required />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Correo Electr&oacute;nico *</label>
+                                <input type="email" name="email" class="form-control form-control-sm" placeholder="counter02@aerolineavip.com" required />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Contrase&ntilde;a Inicial *</label>
+                                <input type="password" name="password" class="form-control form-control-sm" value="Counter123*" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold mb-1">Rol Inicial *</label>
+                                <select name="rol" class="form-select form-select-sm">
+                                    <option value="Counter" selected>Counter</option>
+                                    <option value="Administrador">Administrador</option>
+                                    <option value="Cliente">Cliente</option>
+                                    <option value="SuperUsuario">SuperUsuario</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-avianca-primary btn-sm w-100 rounded-pill">
+                                + Crear Usuario y Asignar Rol
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning small mb-0">
+                            Conforme a la regla de negocio <strong>RN-02</strong>, &uacute;nicamente el rol <strong>SuperUsuario</strong> est&aacute; autorizado para dar de alta usuarios internos (<code>Administrador</code> / <code>Counter</code>) o modificar la asignaci&oacute;n de roles.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- =========================================================================
+         TAB 2: PASAJEROS (CRUD dbo.Pasajero)
+         ========================================================================= -->
+    @if (Model.TabActiva == "pasajeros")
+    {
+        <div class="card card-avianca p-4 shadow-1 border">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h3 class="h5 fw-bold text-dark mb-0">Padr&oacute;n de Pasajeros Registrados (@Model.Pasajeros.Count)</h3>
+                <div class="d-flex gap-2">
+                    @using (Html.BeginForm("Index", "PasajerosAdmin", FormMethod.Get, new { @class = "d-flex gap-2" }))
+                    {
+                        <input type="hidden" name="tab" value="pasajeros" />
+                        <input type="text" name="busqueda" value="@Model.Busqueda" class="form-control form-control-sm" placeholder="Buscar por cédula, nombre o correo..." />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Buscar</button>
+                    }
+                    <a href="@Url.Action("Create")" class="btn btn-sm btn-avianca-primary rounded-pill px-3">+ Nuevo Pasajero</a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo y N&uacute;mero Documento</th>
+                            <th>Nombres y Apellidos</th>
+                            <th>Fecha Nacimiento</th>
+                            <th>Correo y Tel&eacute;fono</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Pasajeros)
+                        {
+                            <tr>
+                                <td class="text-muted">#@p.PasajeroId</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@p.TipoDocumentoCodigo</span>
+                                    <strong class="font-monospace ms-1">@p.NumeroDocumento</strong>
+                                </td>
+                                <td class="fw-bold text-dark">@p.Nombres @p.Apellidos</td>
+                                <td>@(p.FechaNacimiento.HasValue ? p.FechaNacimiento.Value.ToString("dd/MM/yyyy") : "-")</td>
+                                <td>
+                                    <div>@p.Correo</div>
+                                    <div class="text-muted" style="font-size: 11px;">@p.Telefono</div>
+                                </td>
+                                <td class="text-end">
+                                    <a href="@Url.Action("Edit", new { id = p.PasajeroId })" class="btn btn-sm btn-outline-primary py-0 px-2">Editar</a>
+                                    <a href="@Url.Action("Details", new { id = p.PasajeroId })" class="btn btn-sm btn-outline-secondary py-0 px-2">Detalles</a>
+                                    <a href="@Url.Action("Delete", new { id = p.PasajeroId })" class="btn btn-sm btn-outline-danger py-0 px-2">Eliminar</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- =========================================================================
+         TAB 3: RESERVAS (Consulta y Cancelación Administrativa)
+         ========================================================================= -->
+    @if (Model.TabActiva == "reservas")
+    {
+        <div class="card card-avianca p-4 shadow-1 border">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h3 class="h5 fw-bold text-dark mb-0">Control Administrativo de Reservas (@Model.Reservas.Count)</h3>
+                @using (Html.BeginForm("Index", "PasajerosAdmin", FormMethod.Get, new { @class = "d-flex flex-wrap gap-2" }))
+                {
+                    <input type="hidden" name="tab" value="reservas" />
+                    <select name="estadoReserva" class="form-select form-select-sm" style="width: 160px;">
+                        <option value="TODOS" @(Model.FiltroEstadoReserva == "TODOS" ? "selected" : "")>Todos los estados</option>
+                        <option value="CONFIRMADA" @(Model.FiltroEstadoReserva == "CONFIRMADA" ? "selected" : "")>CONFIRMADA</option>
+                        <option value="PENDIENTE" @(Model.FiltroEstadoReserva == "PENDIENTE" ? "selected" : "")>PENDIENTE</option>
+                        <option value="CANCELADA" @(Model.FiltroEstadoReserva == "CANCELADA" ? "selected" : "")>CANCELADA</option>
+                        <option value="EXPIRADA" @(Model.FiltroEstadoReserva == "EXPIRADA" ? "selected" : "")>EXPIRADA</option>
+                    </select>
+                    <input type="text" name="busqueda" value="@Model.Busqueda" class="form-control form-control-sm" placeholder="Código RV o documento..." style="width: 200px;" />
+                    <button type="submit" class="btn btn-sm btn-danger">Filtrar</button>
+                }
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>C&oacute;digo Reserva</th>
+                            <th>Creaci&oacute;n</th>
+                            <th>Ruta y Fecha Vuelo</th>
+                            <th>Pasajeros / Asientos</th>
+                            <th>Importe</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Reservas)
+                        {
+                            var primerVuelo = r.ReservaPasajeroVueloes.FirstOrDefault()?.Vuelo;
+                            var compra = r.Compras.FirstOrDefault();
+
+                            <tr>
+                                <td class="fw-bold font-monospace text-danger">@r.CodigoReserva</td>
+                                <td>@r.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <div class="fw-bold">@(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA ?? "UIO") &rarr; @(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA ?? "GYE")</div>
+                                    <span class="text-muted">VIP@((primerVuelo?.VueloId ?? 1).ToString("D5")) &bull; @(primerVuelo?.FechaOperacion.ToString("dd/MM/yyyy"))</span>
+                                </td>
+                                <td>
+                                    @foreach (var asig in r.ReservaPasajeroVueloes)
+                                    {
+                                        <div>
+                                            @(asig.Pasajero?.Nombres) @(asig.Pasajero?.Apellidos)
+                                            <span class="badge bg-light text-dark border ms-1">Asiento @AerolineaVIP.Controllers.VuelosController.MapearNumeroAsientoACodigo(asig.NumeroAsiento)</span>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="font-monospace fw-bold">USD @(compra != null ? compra.Importe.ToString("N2") : "0.00")</td>
+                                <td>
+                                    <span class="badge @(r.EstadoReservaCodigo == "CONFIRMADA" ? "bg-success" : (r.EstadoReservaCodigo == "PENDIENTE" ? "bg-warning text-dark" : "bg-secondary"))">
+                                        @r.EstadoReservaCodigo
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a href="@Url.Action("Gestionar", "Reservas", new { id = r.CodigoReserva })" class="btn btn-sm btn-outline-dark py-0 px-2">Gestionar</a>
+                                        <a href="@Url.Action("Index", "Comprobantes", new { codigoReserva = r.CodigoReserva })" class="btn btn-sm btn-outline-secondary py-0 px-2">Comprobantes</a>
+                                        @if (r.EstadoReservaCodigo == "CONFIRMADA" || r.EstadoReservaCodigo == "PENDIENTE")
+                                        {
+                                            using (Html.BeginForm("CancelarReservaAdmin", "PasajerosAdmin", FormMethod.Post, new { @class = "d-inline" }))
+                                            {
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="codigoReserva" value="@r.CodigoReserva" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="return confirm('¿Confirma cancelar la reserva @r.CodigoReserva aplicando la política DP-08?');">
+                                                    Cancelar
+                                                </button>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

@@ -1,10 +1,10 @@
-﻿@model AerolineaVIP.Models.ResultadoBusquedaViewModel
+@model AerolineaVIP.Models.ResultadoBusquedaViewModel
 @{
     ViewBag.Title = "Resultados de Vuelos";
 }
 
 <!-- ==========================================================================
-     PANTALLA 6: RESULTADOS DE BÚSQUEDA DE VUELOS (Requisito 10 de PLAN.md)
+     PANTALLA 6: RESULTADOS DE BÚSQUEDA DE VUELOS
      ========================================================================== -->
 <div class="py-4">
     <!-- Barra Superior de Resumen de Itinerario -->
@@ -43,13 +43,13 @@
             <div class="d-flex align-items-center gap-3">
                 <i class="bi bi-info-circle-fill text-primary fs-3"></i>
                 <div>
-                    <strong class="text-dark">BÃºsqueda libre de itinerarios y vuelos ejecutivos.</strong>
-                    <div class="small text-muted">Cualquier usuario puede consultar horarios y tarifas. Para seleccionar asientos y reservar se le solicitarÃ¡ iniciar sesiÃ³n con su cuenta.</div>
+                    <strong class="text-dark">B&uacute;squeda libre de itinerarios y vuelos ejecutivos.</strong>
+                    <div class="small text-muted">Cualquier usuario puede consultar horarios y tarifas. Para seleccionar asientos y reservar se le solicitar&aacute; iniciar sesi&oacute;n con su cuenta.</div>
                 </div>
             </div>
             <div class="mt-2 mt-md-0">
                 <a href="@Url.Action("Login", "Account", new { returnUrl = Request.RawUrl })" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-3">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar SesiÃ³n
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesi&oacute;n
                 </a>
             </div>
         </div>
@@ -65,7 +65,7 @@
         </div>
     }
 
-    <!-- Selector / Carrusel Semanal de Tarifas Reales (DESIGN.md 6.5) -->
+    <!-- Selector / Carrusel Semanal de Tarifas Reales -->
     @if (Model.CalendarioSemanal != null && Model.CalendarioSemanal.Any())
     {
         <div class="mb-4">
@@ -152,7 +152,7 @@
                         </div>
                     </div>
 
-                    <!-- Fila Central: Itinerario con Horarios y Trayecto (DESIGN.md Sección 6.5) -->
+                    <!-- Fila Central: Itinerario con Horarios y Trayecto -->
                     <div class="row align-items-center text-center my-3 gy-3">
                         <!-- Salida -->
                         <div class="col-md-3 text-md-start">
@@ -213,7 +213,7 @@
                                             USD @v.TarifaClassic.ToString("N2")
                                         </span>
                                     </div>
-                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Classic", pasajeros = Model.Criterios.CantidadPasajeros })" 
+                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Classic", pasajeros = Model.Criterios.CantidadPasajeros, tarifaMonto = v.TarifaClassic })" 
                                        class="btn btn-avianca-outline-sm @(!hayCupos ? "disabled" : "")">
                                         Seleccionar Classic &rarr;
                                     </a>
@@ -241,7 +241,7 @@
                                             USD @v.TarifaFlex.ToString("N2")
                                         </span>
                                     </div>
-                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Flex", pasajeros = Model.Criterios.CantidadPasajeros })" 
+                                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = v.VueloId, tarifa = "Flex", pasajeros = Model.Criterios.CantidadPasajeros, tarifaMonto = v.TarifaFlex })" 
                                        class="btn btn-avianca-primary-sm @(!hayCupos ? "disabled" : "")">
                                         Seleccionar Flex &rarr;
                                     </a>
@@ -262,7 +262,7 @@
                 <p class="text-secondary small max-w-700 mx-auto mb-4">
                     Actualmente no existen operaciones registradas en la base de datos para la ruta 
                     <strong>@Model.Criterios.OrigenCodigo &rarr; @Model.Criterios.DestinoCodigo</strong>.
-                    Por favor revisa nuestros destinos autorizados y días de frecuencia confirmados.
+                    Por favor revisa nuestros destinos autorizados y d&iacute;as de frecuencia confirmados.
                 </p>
                 <div class="d-flex justify-content-center gap-3">
                     <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-avianca-primary">

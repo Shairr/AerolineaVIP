@@ -1,0 +1,287 @@
+@model AerolineaVIP.Models.ComprobantesIndexViewModel
+@{
+    ViewBag.Title = "Pantalla 16: Consulta y Emisión de Comprobantes Académicos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-4">
+    <!-- Encabezado de la Pantalla 16 (MOD-08) -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2 no-print">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 16</span>
+                <span class="badge bg-dark rounded-pill px-3 py-1">MOD-08 &bull; Comprobantes Electr&oacute;nicos</span>
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">Pol&iacute;tica DP-05</span>
+            </div>
+            <h1 class="h2 fw-bold text-dark mb-0">
+                Consulta y Emisi&oacute;n de Comprobantes
+            </h1>
+            <p class="text-secondary small mb-0">
+                Consulte las Confirmaciones de Compra (<code>CONFIRMACION</code>), Facturas Acad&eacute;micas (<code>FACTURA</code>) y Notas de Cr&eacute;dito (<code>NOTA_CREDITO</code>) emitidas.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("MisReservas", "Reservas")" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-semibold">
+                &larr; Ir a Mis Reservas
+            </a>
+            @if (Model.ComprobanteSeleccionado != null)
+            {
+                <button type="button" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm" onclick="window.print();" style="background-color: #E1251B; border-color: #E1251B;">
+                    &#128424; Imprimir / Descargar PDF
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Barra de Filtros (Rango de Fechas, Tipo de Comprobante, Código de Reserva) -->
+    <div class="card card-avianca p-3 p-md-4 shadow-1 border mb-4 no-print">
+        @using (Html.BeginForm("Index", "Comprobantes", FormMethod.Get, new { @class = "row g-3 align-items-end" }))
+        {
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark mb-1">Fecha Desde</label>
+                <input type="date" name="fechaDesde" class="form-control form-control-sm" value="@(Model.FechaDesde.HasValue ? Model.FechaDesde.Value.ToString("yyyy-MM-dd") : "")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark mb-1">Fecha Hasta</label>
+                <input type="date" name="fechaHasta" class="form-control form-control-sm" value="@(Model.FechaHasta.HasValue ? Model.FechaHasta.Value.ToString("yyyy-MM-dd") : "")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark mb-1">Tipo de Comprobante</label>
+                <select name="tipo" class="form-select form-select-sm">
+                    <option value="TODOS" @(Model.TipoFiltro == "TODOS" ? "selected" : "")>Todos los tipos</option>
+                    <option value="FACTURA" @(Model.TipoFiltro == "FACTURA" ? "selected" : "")>Factura Académica (FACTURA)</option>
+                    <option value="CONFIRMACION" @(Model.TipoFiltro == "CONFIRMACION" ? "selected" : "")>Confirmación de Compra (CONFIRMACION)</option>
+                    <option value="NOTA_CREDITO" @(Model.TipoFiltro == "NOTA_CREDITO" ? "selected" : "")>Nota de Crédito (NOTA_CREDITO)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark mb-1">C&oacute;digo Reserva / No. Comprobante</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="codigoReserva" class="form-control text-uppercase" placeholder="Ej: RV000001 o ACAD-" value="@Model.CodigoReservaFiltro" />
+                    <button type="submit" class="btn btn-danger fw-bold px-3" style="background-color: #E1251B; border-color: #E1251B;">
+                        Filtrar
+                    </button>
+                    <a href="@Url.Action("Index", "Comprobantes")" class="btn btn-outline-secondary" title="Limpiar filtros">
+                        &#10006;
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna Izquierda: Tabla de Comprobantes Emitidos -->
+        <div class="col-lg-6 no-print">
+            <div class="card card-avianca shadow-1 border h-100">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h3 class="h6 fw-bold text-dark mb-0">
+                        &#128196; Comprobantes Emitidos (@Model.Comprobantes.Count)
+                    </h3>
+                    <span class="badge bg-light text-dark border small">Seleccione una fila para previsualizar</span>
+                </div>
+
+                @if (Model.Comprobantes != null && Model.Comprobantes.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle small mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">No. Comprobante</th>
+                                    <th>Tipo</th>
+                                    <th>Reserva</th>
+                                    <th>Emisi&oacute;n</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-center pe-3">Acci&oacute;n</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Comprobantes)
+                                {
+                                    bool esActivo = Model.ComprobanteSeleccionado != null && Model.ComprobanteSeleccionado.ComprobanteId == item.ComprobanteId;
+                                    <tr class="@(esActivo ? "table-danger" : "")">
+                                        <td class="ps-3 font-monospace fw-bold text-dark">
+                                            @item.NumeroComprobante
+                                            @if (item.EstadoComprobanteCodigo == "ANULADO")
+                                            {
+                                                <span class="badge bg-secondary ms-1" style="font-size: 9px;">ANULADO</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.TipoComprobanteCodigo == "FACTURA")
+                                            {
+                                                <span class="badge bg-danger text-white">FACTURA</span>
+                                            }
+                                            else if (item.TipoComprobanteCodigo == "NOTA_CREDITO")
+                                            {
+                                                <span class="badge bg-warning text-dark">NOTA CR&Eacute;DITO</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-dark text-white">CONFIRMACI&Oacute;N</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="font-monospace fw-semibold">@item.CodigoReserva</span>
+                                            <div class="text-muted" style="font-size: 11px;">@item.RutaResumen</div>
+                                        </td>
+                                        <td>@item.FechaEmision.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="text-end font-monospace fw-bold">USD @item.MontoTotal.ToString("N2")</td>
+                                        <td class="text-center pe-3">
+                                            <a href="@Url.Action("Index", "Comprobantes", new { comprobanteId = item.ComprobanteId, fechaDesde = Model.FechaDesde?.ToString("yyyy-MM-dd"), fechaHasta = Model.FechaHasta?.ToString("yyyy-MM-dd"), tipo = Model.TipoFiltro, codigoReserva = Model.CodigoReservaFiltro })" 
+                                               class="btn btn-sm @(esActivo ? "btn-danger" : "btn-outline-danger") py-0 px-2">
+                                                Ver
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-5 text-center text-muted">
+                        <div class="fs-2 mb-2">&#128196;</div>
+                        <p class="mb-0 small">No se encontraron comprobantes con los filtros seleccionados.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Vista Previa del Comprobante Académico (Imprimible) -->
+        <div class="col-lg-6 columna-impresion">
+            @if (Model.ComprobanteSeleccionado != null)
+            {
+                var sel = Model.ComprobanteSeleccionado;
+                decimal subtotal = Math.Round(sel.MontoTotal / 1.15m, 2);
+                decimal iva = sel.MontoTotal - subtotal;
+
+                <div class="card shadow border-0 rounded-4 p-4 bg-white comprobante-sri-document">
+                    <!-- Leyenda Obligatoria DP-05 -->
+                    <div class="alert alert-warning border-warning text-dark small fw-bold text-center mb-3 py-2">
+                        &#9888; @Model.LeyendaAcademica
+                    </div>
+
+                    <!-- Cabecera del Emisor (dbo.DatosEmisor - DP-05) -->
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <h4 class="h5 fw-bold text-danger mb-1">@Model.EmisorRazonSocial</h4>
+                                <div class="small text-muted"><strong>RUC Simulado:</strong> @Model.EmisorRuc</div>
+                                <div class="small text-muted"><strong>Matriz:</strong> @Model.EmisorDireccion</div>
+                                <div class="small text-muted"><strong>Contacto:</strong> @Model.EmisorTelefono &bull; @Model.EmisorCorreo</div>
+                            </div>
+                            <div class="text-end bg-light p-2 rounded border">
+                                <span class="badge bg-danger text-white mb-1">@sel.TipoComprobanteCodigo</span>
+                                <div class="font-monospace fw-bold text-dark fs-6">@sel.NumeroComprobante</div>
+                                <div class="small text-muted">Estado: <strong>@sel.EstadoComprobanteCodigo</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos del Receptor y de la Reserva -->
+                    <div class="bg-light rounded-3 p-3 border mb-3 small">
+                        <div class="row g-2">
+                            <div class="col-sm-7">
+                                <span class="text-muted">Receptor / Pasajero Titular:</span>
+                                <div class="fw-bold text-dark text-uppercase">@sel.ReceptorNombre</div>
+                            </div>
+                            <div class="col-sm-5 text-sm-end">
+                                <span class="text-muted">Documento:</span>
+                                <div class="font-monospace fw-bold text-dark">@sel.ReceptorDocumento</div>
+                            </div>
+                            <div class="col-sm-7">
+                                <span class="text-muted">Correo Electr&oacute;nico:</span>
+                                <div class="text-dark">@sel.ReceptorCorreo</div>
+                            </div>
+                            <div class="col-sm-5 text-sm-end">
+                                <span class="text-muted">C&oacute;digo de Reserva:</span>
+                                <div class="font-monospace fw-bold text-danger">@sel.CodigoReserva (@sel.RutaResumen)</div>
+                            </div>
+                            <div class="col-sm-7">
+                                <span class="text-muted">Fecha de Emisi&oacute;n:</span>
+                                <div class="text-dark">@sel.FechaEmision.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                            </div>
+                            <div class="col-sm-5 text-sm-end">
+                                <span class="text-muted">Fecha de Vuelo:</span>
+                                <div class="text-dark">@sel.FechaVuelo.ToString("dd/MM/yyyy")</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalle del Concepto -->
+                    <table class="table table-sm table-bordered small mb-3">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Concepto / Servicio Aeron&aacute;utico</th>
+                                <th class="text-center">Cant.</th>
+                                <th class="text-end">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold text-dark">
+                                        @(sel.TipoComprobanteCodigo == "NOTA_CREDITO"
+                                            ? $"Reembolso por cancelación de reserva ejecutiva {sel.CodigoReserva} ({sel.RutaResumen})"
+                                            : $"Transporte aéreo privado en aeronave Embraer Phenom 300E - Reserva {sel.CodigoReserva} ({sel.RutaResumen})")
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(sel.Observaciones))
+                                    {
+                                        <div class="text-muted" style="font-size: 11px;">@sel.Observaciones</div>
+                                    }
+                                </td>
+                                <td class="text-center">1</td>
+                                <td class="text-end font-monospace">USD @subtotal.ToString("N2")</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="text-end text-muted">Subtotal Base:</td>
+                                <td class="text-end font-monospace">USD @subtotal.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-end text-muted">IVA Referencial (15%):</td>
+                                <td class="text-end font-monospace">USD @iva.ToString("N2")</td>
+                            </tr>
+                            <tr class="table-dark">
+                                <td colspan="2" class="text-end fw-bold">IMPORTE TOTAL (USD):</td>
+                                <td class="text-end font-monospace fw-bold">USD @sel.MontoTotal.ToString("N2")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="d-flex flex-wrap justify-content-end align-items-center pt-2 border-top no-print gap-2">
+                        <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold" onclick="window.print();" style="background-color: #E1251B; border-color: #E1251B;">
+                            &#128424; Imprimir este Comprobante
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card card-avianca p-5 text-center border">
+                    <p class="text-muted mb-0">Seleccione un comprobante del listado izquierdo para visualizar su formato completo.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        .no-print, nav, footer, header {
+            display: none !important;
+        }
+        .columna-impresion {
+            width: 100% !important;
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+        .comprobante-sri-document {
+            box-shadow: none !important;
+            border: 1px solid #ccc !important;
+        }
+    }
+</style>
