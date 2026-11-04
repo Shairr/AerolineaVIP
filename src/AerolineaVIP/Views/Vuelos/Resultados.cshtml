@@ -11,9 +11,6 @@
     <div class="card card-avianca p-3 p-md-4 shadow-1 border mb-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-                <span class="badge bg-danger text-white rounded-pill px-3 py-1 mb-1">
-                    @(Model.Criterios.TipoViaje == "ida-vuelta" ? "Ida y Vuelta" : "Solo Ida")
-                </span>
                 <h1 class="h3 fw-bold mb-1 text-dark">
                     @Model.Criterios.OrigenCodigo &rarr; @Model.Criterios.DestinoCodigo
                 </h1>
@@ -134,7 +131,7 @@
                             <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = v.VueloId })" 
                                class="btn btn-outline-secondary btn-sm py-1 px-3" 
                                title="Ver mapa de asientos del Phenom 300E en solo lectura">
-                                &#128186; Ver Cabina (P7)
+                                &#128186; Ver Cabina
                             </a>
 
                             @if (hayCupos)

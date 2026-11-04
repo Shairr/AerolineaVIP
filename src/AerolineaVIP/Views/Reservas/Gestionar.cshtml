@@ -37,7 +37,7 @@
             {
                 <li class="breadcrumb-item"><a href="@Url.Action("MisReservas", "Reservas")" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Volver a Mis Reservas</a></li>
             }
-            <li class="breadcrumb-item active" aria-current="page">Gesti&oacute;n de Reserva @Model.CodigoReserva (Pantalla 14)</li>
+            <li class="breadcrumb-item active" aria-current="page">Gesti&oacute;n de Reserva @Model.CodigoReserva</li>
         </ol>
     </nav>
 
@@ -45,7 +45,6 @@
     <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden">
         <div class="card-header bg-dark text-white p-4 d-flex flex-wrap justify-content-between align-items-center">
             <div>
-                <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold text-uppercase mb-2">Reserva VIP &bull; Pantalla 14</span>
                 <h1 class="h3 fw-bold mb-1 font-monospace">@Model.CodigoReserva</h1>
                 <p class="text-white-50 mb-0 small">Emitida el @Model.FechaCreacion.ToString("dd MMMM yyyy, HH:mm")</p>
             </div>

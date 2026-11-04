@@ -50,7 +50,7 @@ namespace AerolineaVIP
                 }
 
                 // 2. Creación del SuperUsuario por código (soporta superusuario y superadmin)
-                CrearUsuarioSiNoExiste(gestorUsuarios, "superusuario", "super@aerolineavip.com", "Admin123*", "SuperUsuario");
+                //CrearUsuarioSiNoExiste(gestorUsuarios, "superusuario", "super@aerolineavip.com", "Admin123*", "SuperUsuario");
                 CrearUsuarioSiNoExiste(gestorUsuarios, "superadmin", "superadmin@aerolineavip.com", "Super123*", "SuperUsuario");
 
                 // 3. Creación del Administrador por código

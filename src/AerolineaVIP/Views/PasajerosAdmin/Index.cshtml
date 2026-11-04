@@ -1,4 +1,4 @@
-﻿@model AerolineaVIP.Models.AdminGestionIntegralViewModel
+@model AerolineaVIP.Models.AdminGestionIntegralViewModel
 @{
     ViewBag.Title = "Pantalla 20: Gestión de Usuarios, Pasajeros y Reservas";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -22,19 +22,15 @@
         </div>
     }
 
-    <!-- Encabezado de la Pantalla 20 -->
+    <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 border-bottom pb-3">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 20</span>
-                <span class="badge bg-dark rounded-pill px-3 py-1">MOD-10 &bull; Administraci&oacute;n Integral</span>
-            </div>
             <h1 class="h3 fw-bold text-dark mb-0">Gesti&oacute;n de Usuarios, Pasajeros y Reservas</h1>
-            <p class="text-muted small mb-0">Administraci&oacute;n centralizada con control de acceso por roles (<code>SuperUsuario</code> y <code>Administrador</code> conforme a RN-02).</p>
+            <p class="text-muted small mb-0">Administraci&oacute;n centralizada con control de acceso por roles (<code>SuperUsuario</code> y <code>Administrador</code>).</p>
         </div>
         <div>
             <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                &larr; Panel Admin (Pantalla 17)
+                &larr; Panel Admin
             </a>
         </div>
     </div>

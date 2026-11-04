@@ -9,14 +9,9 @@
     <!-- Stepper de Progreso (Paso 4 Activo) -->
     @Html.Partial("_PasosReserva", 4)
 
-    <!-- Encabezado de la Pantalla 11 -->
+    <!-- Encabezado -->
     <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 11</span>
-                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 4 de 4</span>
-                <span class="badge bg-success text-white rounded-pill px-3 py-1">&#128274; Pasarela Acad&eacute;mica Simulada (DP-06)</span>
-            </div>
             <h1 class="h2 fw-bold text-dark mb-0">
                 Pasarela de Pago Simulado
             </h1>
@@ -65,7 +60,6 @@
                 <div class="card card-avianca p-4 shadow-1 mb-4">
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                         <h3 class="h5 fw-bold text-dark mb-0">&#128179; Datos del M&eacute;todo de Pago</h3>
-                        <span class="badge bg-light text-dark border">&#128274; Simulaci&oacute;n Determin&iacute;stica DP-06</span>
                     </div>
 
                     <!-- Selector de Método de Pago (Crédito / Débito - Catálogo dbo.MetodoPago) -->
@@ -162,14 +156,6 @@
                             Confirmo los datos ingresados y autorizo el procesamiento del pago simulado de la reserva conforme a las pol&iacute;ticas tarifarias de Aerol&iacute;nea VIP.
                         </label>
                         @Html.ValidationMessageFor(m => m.AceptoTerminos, "", new { @class = "text-danger small d-block" })
-                    </div>
-                </div>
-
-                <!-- Aviso de Seguridad Bancaria Real -->
-                <div class="alert alert-secondary border-0 p-3 small d-flex align-items-center gap-2">
-                    <span class="fs-4 text-success">&#128737;</span>
-                    <div>
-                        <strong>Privacidad y Seguridad (RNF-04):</strong> El sistema jam&aacute;s almacena el n&uacute;mero completo de tarjeta ni el c&oacute;digo CVV en la base de datos; &uacute;nicamente persiste los &uacute;ltimos 4 d&iacute;gitos y el c&oacute;digo de operaci&oacute;n <code>SIM-{Reserva}-{Intento}</code>.
                     </div>
                 </div>
             </div>

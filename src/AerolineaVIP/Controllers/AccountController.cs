@@ -170,7 +170,8 @@ namespace AerolineaVIP.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email, EmailConfirmed = true };
+                string nombreUsuario = string.IsNullOrWhiteSpace(model.UserName) ? model.Email : model.UserName.Trim();
+                var user = new ApplicationUser { UserName = nombreUsuario, Email = model.Email, EmailConfirmed = true };
                 var result = UserManager.Create(user, model.Password);
                 if (result.Succeeded)
                 {

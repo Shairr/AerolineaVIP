@@ -8,15 +8,9 @@
     <!-- Stepper de Progreso (Paso 1 Activo) -->
     @Html.Partial("_PasosReserva", 1)
 
-    <!-- Encabezado de la Pantalla 8 -->
+    <!-- Encabezado -->
     <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 8</span>
-                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 1 de 4</span>
-                <span class="badge bg-light text-dark border">Vuelo @Model.CodigoVuelo &bull; @Model.FechaOperacion.ToString("dd MMM yyyy")</span>
-                <span class="small text-muted ms-1">Aeronave Oficial: Phenom 300E (7 plazas)</span>
-            </div>
             <h1 class="h2 fw-bold text-dark mb-0">
                 Selecci&oacute;n de Asientos en Cabina
             </h1>

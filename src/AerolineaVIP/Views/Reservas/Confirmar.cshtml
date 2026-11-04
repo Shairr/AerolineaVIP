@@ -8,21 +8,14 @@
     <!-- Stepper de Progreso (Paso 3 Activo) -->
     @Html.Partial("_PasosReserva", 3)
 
-    <!-- Encabezado de la Pantalla 10 -->
+    <!-- Encabezado -->
     <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 10</span>
-                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 3 de 4</span>
-                <span class="badge text-white rounded-pill px-3 py-1" style="background-color: #6F42C1;">
-                    &#128274; Reserva Creada en Estado PENDIENTE (Asientos en Morado)
-                </span>
-            </div>
             <h1 class="h2 fw-bold text-dark mb-0">
                 Resumen y Confirmaci&oacute;n de Reserva
             </h1>
             <p class="text-secondary small mb-0">
-                Su reserva ha sido registrada con retenci&oacute;n de asientos por <strong>@Model.MinutosRetencion minutos</strong> (Pol&iacute;tica DP-07). Puede pagar ahora o conservarla pendiente en <em>Mis Reservas</em>.
+                Su reserva ha sido registrada con retenci&oacute;n de asientos por <strong>@Model.MinutosRetencion minutos</strong>. Puede pagar ahora o conservarla pendiente en <em>Mis Reservas</em>.
             </p>
         </div>
 
@@ -159,10 +152,6 @@
                         </table>
                     </div>
 
-                    <div class="alert alert-light border small text-muted p-2 rounded-2 mb-3">
-                        &#128179; <strong>Pol&iacute;tica DP-07:</strong> Los asientos seleccionados (<strong>@Model.AsientosCodigos</strong>) han quedado reservados en color <strong>Morado</strong> durante @Model.MinutosRetencion minutos. Al aprobarse el pago pasar&aacute;n a estado <strong>Ocupado (Rojo)</strong>.
-                    </div>
-
                     <!-- Botón Principal: Pagar Ahora -->
                     <a href="@Url.Action("Pagar", "Compras", new { reservaId = Model.ReservaId, codigoPreReserva = Model.CodigoPreReserva, vueloId = Model.VueloId, tarifa = Model.TarifaSeleccionada })" 
                        class="btn btn-avianca-primary w-100 py-3 fw-bold fs-6 mb-2">
@@ -174,13 +163,6 @@
                        class="btn btn-outline-dark w-100 py-2 fw-semibold small">
                         &#128190; Conservar como Pendiente y Pagar Luego en Mis Reservas
                     </a>
-
-                    <div class="text-center mt-3">
-                        <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = Model.VueloId })" 
-                           class="small text-secondary text-decoration-none">
-                            &#128186; Ver cabina con asientos en Morado (Reservados)
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>

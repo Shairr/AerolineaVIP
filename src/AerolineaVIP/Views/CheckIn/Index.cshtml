@@ -14,12 +14,12 @@
         </div>
     }
 
-    <!-- Breadcrumb y Buscador de Reserva por Código (Pantalla 15) -->
+    <!-- Breadcrumb y Buscador de Reserva por Código -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="@Url.Action("MisReservas", "Reservas")" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Mis Reservas</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Pantalla 15: Check-in y Pase de Abordar</li>
+                <li class="breadcrumb-item active" aria-current="page">Check-in y Pase de Abordar</li>
             </ol>
         </nav>
 
@@ -47,7 +47,6 @@
     <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden">
         <div class="card-header bg-danger text-white p-4 d-flex flex-wrap justify-content-between align-items-center" style="background-color: #E1251B !important;">
             <div>
-                <span class="badge bg-white text-danger rounded-pill px-3 py-1 fw-bold text-uppercase mb-2">Check-in Express VIP &bull; Pantalla 15</span>
                 <h1 class="h3 fw-bold mb-1 font-monospace">Reserva @Model.CodigoReserva</h1>
                 <p class="text-white-50 mb-0 small">Obtenga sus pases de abordar con c&oacute;digo de embarque <code>BP-{CheckInId}</code> para su vuelo ejecutivo.</p>
             </div>
