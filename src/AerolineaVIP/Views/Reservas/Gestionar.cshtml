@@ -1,15 +1,43 @@
-﻿@model AerolineaVIP.Models.GestionarReservaViewModel
+@model AerolineaVIP.Models.GestionarReservaViewModel
 @{
     ViewBag.Title = "Gestionar Reserva - " + Model.CodigoReserva;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container my-5">
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+            <span>@TempData["MensajeExito"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+            <span>@TempData["MensajeError"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="@Url.Action("MisReservas", "Reservas")" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Volver a Mis Reservas</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Gestión de Reserva @Model.CodigoReserva</li>
+            @if (User.IsInRole("Counter"))
+            {
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Counter")" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Volver a Atenci&oacute;n Counter</a></li>
+            }
+            else if (User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))
+            {
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "PasajerosAdmin", new { tab = "reservas" })" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Volver a Gesti&oacute;n de Reservas</a></li>
+            }
+            else
+            {
+                <li class="breadcrumb-item"><a href="@Url.Action("MisReservas", "Reservas")" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Volver a Mis Reservas</a></li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">Gesti&oacute;n de Reserva @Model.CodigoReserva</li>
         </ol>
     </nav>
 
@@ -17,15 +45,20 @@
     <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden">
         <div class="card-header bg-dark text-white p-4 d-flex flex-wrap justify-content-between align-items-center">
             <div>
-                <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold text-uppercase mb-2">Reserva VIP</span>
                 <h1 class="h3 fw-bold mb-1 font-monospace">@Model.CodigoReserva</h1>
                 <p class="text-white-50 mb-0 small">Emitida el @Model.FechaCreacion.ToString("dd MMMM yyyy, HH:mm")</p>
             </div>
             <div class="mt-3 mt-md-0 d-flex align-items-center gap-2">
-                @if (Model.EstadoReservaCodigo == "CANCELADA")
+                @if (Model.EstadoReservaCodigo == "CANCELADA" || Model.EstadoReservaCodigo == "EXPIRADA")
                 {
                     <span class="badge bg-secondary px-4 py-2 rounded-pill fw-bold fs-6">
-                        <i class="bi bi-x-circle-fill me-1"></i> CANCELADA
+                        <i class="bi bi-x-circle-fill me-1"></i> @Model.EstadoReservaCodigo
+                    </span>
+                }
+                else if (Model.EstadoReservaCodigo == "PENDIENTE")
+                {
+                    <span class="badge text-white px-4 py-2 rounded-pill fw-bold fs-6 shadow-sm" style="background-color: #6F42C1;">
+                        <i class="bi bi-hourglass-split me-1"></i> PENDIENTE DE PAGO (ASIENTOS EN MORADO)
                     </span>
                 }
                 else if (Model.TieneCheckIn)
@@ -34,16 +67,10 @@
                         <i class="bi bi-qr-code-scan me-1"></i> CHECK-IN COMPLETADO
                     </span>
                 }
-                else if (Model.EstadoReservaCodigo == "CONFIRMADA")
-                {
-                    <span class="badge bg-primary px-4 py-2 rounded-pill fw-bold fs-6 shadow-sm" style="background-color: #E1251B !important;">
-                        <i class="bi bi-clock-history me-1"></i> CONFIRMADA (CHECK-IN PENDIENTE)
-                    </span>
-                }
                 else
                 {
-                    <span class="badge bg-warning text-dark px-4 py-2 rounded-pill fw-bold fs-6">
-                        @Model.EstadoReservaCodigo
+                    <span class="badge bg-danger px-4 py-2 rounded-pill fw-bold fs-6 shadow-sm">
+                        <i class="bi bi-check2-circle me-1"></i> CONFIRMADA (ASIENTOS EN ROJO)
                     </span>
                 }
             </div>
@@ -92,12 +119,22 @@
                 </div>
 
                 <div class="col-md-3 text-center text-md-end">
-                    <div class="text-muted small">Total Facturado</div>
+                    <div class="text-muted small">@(Model.EstadoReservaCodigo == "PENDIENTE" ? "Total a Pagar" : "Total Facturado")</div>
                     <div class="h2 fw-bold text-dark mb-3">$@Model.TotalPagado.ToString("N2") <small class="fs-6 text-muted">USD</small></div>
                     <div class="d-grid gap-2">
-                        <a href="@Url.Action("Comprobante", "Reservas", new { id = Model.CodigoReserva })" class="btn btn-outline-danger btn-sm rounded-pill fw-bold">
-                            <i class="bi bi-file-earmark-pdf me-1"></i> Factura SRI
-                        </a>
+                        @if (Model.EstadoReservaCodigo == "PENDIENTE")
+                        {
+                            <a href="@Url.Action("Pagar", "Compras", new { reservaId = Model.ReservaId, codigoPreReserva = Model.CodigoReserva, vueloId = Model.VueloId })" class="btn btn-danger btn-sm rounded-pill fw-bold" style="background-color: #E1251B; border-color: #E1251B;">
+                                <i class="bi bi-credit-card me-1"></i> Pagar Reserva Ahora
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Comprobante", "Reservas", new { id = Model.CodigoReserva })" class="btn btn-outline-danger btn-sm rounded-pill fw-bold">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Comprobante Acad&eacute;mico
+                            </a>
+                        }
+
                         @if (Model.TieneCheckIn)
                         {
                             <a href="@Url.Action("PaseAbordar", "CheckIn", new { codigoReserva = Model.CodigoReserva })" class="btn btn-success btn-sm rounded-pill fw-bold">
@@ -147,7 +184,7 @@
                                 <span class="font-monospace">@p.NumeroDocumento</span>
                             </td>
                             <td>
-                                <span class="badge bg-danger text-white rounded-pill px-3 py-2 fw-bold font-monospace fs-6">
+                                <span class="badge @(Model.EstadoReservaCodigo == "PENDIENTE" ? "text-white" : "bg-danger text-white") rounded-pill px-3 py-2 fw-bold font-monospace fs-6" style="@(Model.EstadoReservaCodigo == "PENDIENTE" ? "background-color: #6F42C1;" : "")">
                                     @p.AsientoCodigo
                                 </span>
                             </td>
@@ -182,20 +219,12 @@
             <div class="card shadow-sm border-0 rounded-4 h-100">
                 <div class="card-header bg-white py-3 px-4 border-bottom">
                     <h5 class="fw-bold text-dark mb-0">
-                        <i class="bi bi-receipt text-danger me-2"></i>Desglose Tributario (Normativa SRI Ecuador)
+                        <i class="bi bi-receipt text-danger me-2"></i>Desglose Econ&oacute;mico de la Reserva
                     </h5>
                 </div>
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Tarifa Base Pasajeros:</span>
-                        <span class="fw-semibold text-dark">$@Model.TarifaBase.ToString("N2") USD</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Tasas Aeroportuarias (DGAC / Quiport):</span>
-                        <span class="fw-semibold text-dark">$@Model.TasasAeroportuarias.ToString("N2") USD</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
-                        <span class="text-muted">Subtotal Neto Gravado:</span>
+                        <span class="text-muted">Subtotal Sin Impuestos:</span>
                         <span class="fw-bold text-dark">$@Model.Subtotal.ToString("N2") USD</span>
                     </div>
                     <div class="d-flex justify-content-between mb-3">
@@ -203,7 +232,7 @@
                         <span class="fw-semibold text-danger">+$@Model.Iva.ToString("N2") USD</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                        <span class="h5 fw-bold text-dark mb-0">Total Pagado:</span>
+                        <span class="h5 fw-bold text-dark mb-0">Importe Total:</span>
                         <span class="h4 fw-bold text-danger mb-0">$@Model.TotalPagado.ToString("N2") USD</span>
                     </div>
                 </div>
@@ -214,7 +243,7 @@
             <div class="card shadow-sm border-0 rounded-4 h-100">
                 <div class="card-header bg-white py-3 px-4 border-bottom">
                     <h5 class="fw-bold text-dark mb-0">
-                        <i class="bi bi-credit-card-2-front text-danger me-2"></i>Información del Pago
+                        <i class="bi bi-credit-card-2-front text-danger me-2"></i>Informaci&oacute;n del Pago Simulado
                     </h5>
                 </div>
                 <div class="card-body p-4">
@@ -228,37 +257,50 @@
                         </div>
                     </div>
                     <div class="small mb-2">
-                        <span class="text-muted">Código de Autorización:</span>
+                        <span class="text-muted">C&oacute;digo de Operaci&oacute;n (DP-06):</span>
                         <span class="font-monospace fw-bold text-dark ms-1">@Model.CodigoOperacion</span>
                     </div>
                     <div class="small mb-3">
                         <span class="text-muted">Fecha de Procesamiento:</span>
-                        <span class="fw-semibold text-dark ms-1">@(Model.FechaPago.HasValue ? Model.FechaPago.Value.ToString("dd/MM/yyyy HH:mm:ss") : "Confirmado")</span>
+                        <span class="fw-semibold text-dark ms-1">@(Model.FechaPago.HasValue ? Model.FechaPago.Value.ToString("dd/MM/yyyy HH:mm:ss") : "Pendiente de pago")</span>
                     </div>
-                    <div class="p-3 bg-light-subtle rounded-3 border small text-muted">
-                        <i class="bi bi-lock-fill text-success me-1"></i>
-                        Transacción procesada bajo protocolo seguro TLS 1.3 con tokenización bancaria.
-                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.NumeroNotaCredito))
+                    {
+                        <div class="alert alert-info py-2 px-3 small mb-0">
+                            <strong>Nota de Cr&eacute;dito Emitida:</strong> <code>@Model.NumeroNotaCredito</code>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Políticas de Cancelación y Acciones -->
+    <!-- Políticas de Cancelación y Acciones (DP-08) -->
     <div class="card shadow-sm border-0 rounded-4 border-danger border-opacity-25">
         <div class="card-body p-4">
             <div class="row align-items-center g-3">
                 <div class="col-md-8">
                     <h5 class="fw-bold text-dark mb-1">
-                        <i class="bi bi-info-circle-fill text-danger me-2"></i>Política de Cancelaciones y Modificaciones
+                        <i class="bi bi-info-circle-fill text-danger me-2"></i>Pol&iacute;tica de Cancelaciones y Penalidades (DP-08)
                     </h5>
-                    <p class="text-muted mb-0 small">
+                    <p class="text-muted mb-2 small">
                         @Model.PoliticaCancelacion
-                        Las tarifas ejecutivas VIP permiten cancelación con reintegro al mismo método de pago si se procesa con anticipación.
                     </p>
+                    @if (Model.EsCancelable)
+                    {
+                        <div class="small fw-semibold text-dark">
+                            &#128176; Condici&oacute;n actual para esta reserva: Penalidad aplicable del <strong>@Model.PorcentajePenalidad.ToString("N0")%</strong> (USD @Model.MontoPenalidad.ToString("N2")) &bull; Reembolso estimado: <strong class="text-success">USD @Model.MontoReembolso.ToString("N2")</strong>.
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(Model.MotivoNoCancelable))
+                    {
+                        <div class="small fw-semibold text-danger">
+                            &#9888; @Model.MotivoNoCancelable
+                        </div>
+                    }
                 </div>
                 <div class="col-md-4 text-md-end">
-                    @if (Model.EsCancelable && Model.EstadoReservaCodigo == "CONFIRMADA")
+                    @if (Model.EsCancelable)
                     {
                         <button type="button" class="btn btn-outline-danger rounded-pill fw-bold px-4" data-bs-toggle="modal" data-bs-target="#modalCancelar">
                             <i class="bi bi-trash3 me-1"></i> Cancelar Reserva
@@ -267,7 +309,7 @@
                     else
                     {
                         <button type="button" class="btn btn-secondary rounded-pill fw-bold px-4" disabled>
-                            Cancelación No Disponible
+                            Cancelaci&oacute;n No Disponible
                         </button>
                     }
                 </div>
@@ -277,14 +319,14 @@
 </div>
 
 <!-- Modal para Cancelación de Reserva -->
-@if (Model.EsCancelable && Model.EstadoReservaCodigo == "CONFIRMADA")
+@if (Model.EsCancelable)
 {
     <div class="modal fade" id="modalCancelar" tabindex="-1" aria-labelledby="modalCancelarLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow">
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title fw-bold text-danger" id="modalCancelarLabel">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Cancelación de Reserva
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Cancelaci&oacute;n de Reserva (DP-08)
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
@@ -295,19 +337,26 @@
 
                     <div class="modal-body py-4">
                         <p class="text-dark">
-                            ¿Está seguro de que desea cancelar la reserva <strong class="font-monospace">@Model.CodigoReserva</strong> con destino a <strong>@Model.DestinoCiudad</strong>?
+                            &iquest;Est&aacute; seguro de que desea cancelar la reserva <strong class="font-monospace">@Model.CodigoReserva</strong> con destino a <strong>@Model.DestinoCiudad</strong>?
                         </p>
                         <div class="alert alert-warning border-0 rounded-3 small">
                             <i class="bi bi-clock-history me-1"></i>
-                            Conforme a la política tarifaria, se liberarán los asientos asignados y se solicitará el reembolso correspondiente a su tarjeta <strong>•••• @Model.Ultimos4</strong>.
+                            @if (Model.EstadoReservaCodigo == "PENDIENTE")
+                            {
+                                <span>Reserva en estado <strong>PENDIENTE</strong>: se cancelar&aacute; sin cargo (0% penalidad) y los asientos volver&aacute;n inmediatamente a estado <strong>Disponible (Verde)</strong>.</span>
+                            }
+                            else
+                            {
+                                <span>Pol&iacute;tica DP-08: Se aplicar&aacute; una penalidad del <strong>@Model.PorcentajePenalidad.ToString("N0")%</strong> (USD @Model.MontoPenalidad.ToString("N2")), se emitir&aacute; una <strong>Nota de Cr&eacute;dito Acad&eacute;mica</strong> por <strong>USD @Model.MontoReembolso.ToString("N2")</strong> y se liberar&aacute;n los asientos en verde.</span>
+                            }
                         </div>
 
                         <div class="mb-3">
-                            <label for="motivo" class="form-label fw-bold small text-muted">Motivo de la Cancelación (opcional):</label>
+                            <label for="motivo" class="form-label fw-bold small text-muted">Motivo de la Cancelaci&oacute;n:</label>
                             <select name="motivo" id="motivo" class="form-select rounded-3">
                                 <option value="Cambio de itinerario">Cambio de itinerario o planes personales</option>
-                                <option value="Emergencia médica o de fuerza mayor">Emergencia médica o de fuerza mayor</option>
-                                <option value="Reprogramación de viaje de negocios">Reprogramación de viaje de negocios</option>
+                                <option value="Emergencia médica o de fuerza mayor">Emergencia m&eacute;dica o de fuerza mayor</option>
+                                <option value="Reprogramación de viaje de negocios">Reprogramaci&oacute;n de viaje de negocios</option>
                                 <option value="Otro">Otro motivo</option>
                             </select>
                         </div>
@@ -316,7 +365,7 @@
                     <div class="modal-footer border-top-0 pt-0">
                         <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Mantener mi Reserva</button>
                         <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" style="background-color: #E1251B; border-color: #E1251B;">
-                            Sí, Cancelar Reserva
+                            S&iacute;, Cancelar Reserva
                         </button>
                     </div>
                 }

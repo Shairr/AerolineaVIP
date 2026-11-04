@@ -1,65 +1,66 @@
-﻿@model AerolineaVIP.Models.Vuelo
-
+@model AerolineaVIP.Models.Vuelo
 @{
-    ViewBag.Title = "Create";
+    ViewBag.Title = "Programar Nuevo Vuelo VIP (Pantalla 18)";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Create</h2>
-
-
-@using (Html.BeginForm()) 
-{
-    @Html.AntiForgeryToken()
-    
-    <div class="form-horizontal">
-        <h4>Vuelo</h4>
-        <hr />
-        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-        <div class="form-group">
-            @Html.LabelFor(model => model.FrecuenciaId, "FrecuenciaId", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.DropDownList("FrecuenciaId", null, htmlAttributes: new { @class = "form-control" })
-                @Html.ValidationMessageFor(model => model.FrecuenciaId, "", new { @class = "text-danger" })
+<div class="container my-4">
+    <div class="card card-avianca p-4 shadow-1 border mx-auto" style="max-width: 760px;">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold text-dark mb-0">Programar Nuevo Vuelo Ejecutivo</h2>
             </div>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                &larr; Volver al Listado
+            </a>
         </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.FechaOperacion, htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.EditorFor(model => model.FechaOperacion, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.FechaOperacion, "", new { @class = "text-danger" })
-            </div>
+        <div class="alert alert-info small border-0 mb-4">
+            <strong>Reglas operativas verificadas (DP-02 / DP-03 / RNP-08):</strong>
+            <ul class="mb-0 ps-3 mt-1">
+                <li>La fecha de operaci&oacute;n debe coincidir con el d&iacute;a de la semana de la frecuencia seleccionada (<code>trg_Vuelo_ValidarFrecuencia</code>).</li>
+                <li>La aeronave asignada debe encontrarse en estado <code>DISPONIBLE</code> (<code>trg_Vuelo_ValidarAeronave</code>).</li>
+                <li>Se valida un tiempo m&iacute;nimo de <strong>60 minutos de turnaround</strong> entre vuelos de la misma aeronave (DP-03).</li>
+            </ul>
         </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.AeronaveId, "AeronaveId", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.DropDownList("AeronaveId", null, htmlAttributes: new { @class = "form-control" })
-                @Html.ValidationMessageFor(model => model.AeronaveId, "", new { @class = "text-danger" })
-            </div>
-        </div>
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+            @Html.ValidationSummary(false, "", new { @class = "text-danger small fw-semibold mb-3" })
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.EstadoVueloCodigo, "EstadoVueloCodigo", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.DropDownList("EstadoVueloCodigo", null, htmlAttributes: new { @class = "form-control" })
-                @Html.ValidationMessageFor(model => model.EstadoVueloCodigo, "", new { @class = "text-danger" })
-            </div>
-        </div>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label small fw-bold text-dark">Frecuencia y Ruta Autorizada *</label>
+                    @Html.DropDownList("FrecuenciaId", null, new { @class = "form-select" })
+                    @Html.ValidationMessageFor(m => m.FrecuenciaId, "", new { @class = "text-danger small" })
+                </div>
 
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Create" class="btn btn-default" />
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-dark">Fecha de Operaci&oacute;n *</label>
+                    @Html.TextBoxFor(m => m.FechaOperacion, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", required = "required" })
+                    @Html.ValidationMessageFor(m => m.FechaOperacion, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-dark">Aeronave Asignada (Phenom 300E) *</label>
+                    @Html.DropDownList("AeronaveId", null, new { @class = "form-select" })
+                    @Html.ValidationMessageFor(m => m.AeronaveId, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-dark">Estado Operativo del Vuelo *</label>
+                    @Html.DropDownList("EstadoVueloCodigo", null, new { @class = "form-select" })
+                    @Html.ValidationMessageFor(m => m.EstadoVueloCodigo, "", new { @class = "text-danger small" })
+                </div>
             </div>
-        </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                <button type="submit" class="btn btn-avianca-primary rounded-pill px-4">
+                    Guardar y Programar Vuelo
+                </button>
+            </div>
+        }
     </div>
-}
-
-<div>
-    @Html.ActionLink("Back to List", "Index")
 </div>
-
-@section Scripts {
-    @Scripts.Render("~/bundles/jqueryval")
-}

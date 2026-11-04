@@ -1,57 +1,35 @@
-﻿@model AerolineaVIP.Models.Vuelo
-
+@model AerolineaVIP.Models.Vuelo
 @{
-    ViewBag.Title = "Delete";
+    ViewBag.Title = "Eliminar / Cancelar Vuelo VIP" + Model.VueloId.ToString("D5");
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Delete</h2>
-
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Vuelo</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.FechaOperacion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.FechaOperacion)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Aeronave.Matricula)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Aeronave.Matricula)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.EstadoVuelo.Descripcion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.EstadoVuelo.Descripcion)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Frecuencia.FrecuenciaId)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Frecuencia.FrecuenciaId)
-        </dd>
-
-    </dl>
-
-    @using (Html.BeginForm()) {
-        @Html.AntiForgeryToken()
-
-        <div class="form-actions no-color">
-            <input type="submit" value="Delete" class="btn btn-default" /> |
-            @Html.ActionLink("Back to List", "Index")
+<div class="container my-4">
+    <div class="card card-avianca p-4 shadow-1 border mx-auto" style="max-width: 680px;">
+        <div class="border-bottom pb-3 mb-4">
+            <h2 class="h4 fw-bold text-dark mb-0">&iquest;Confirma dar de baja el Vuelo VIP@(Model.VueloId.ToString("D5"))?</h2>
         </div>
-    }
+
+        <div class="alert alert-warning small">
+            Si el vuelo cuenta con reservas o tramos de itinerario asociados, el sistema cambiar&aacute; su estado a <strong>CANCELADO</strong> para preservar la integridad referencial.
+        </div>
+
+        <div class="bg-light p-3 rounded border small mb-4">
+            <div class="mb-1"><strong>Ruta:</strong> @(Model.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA) &rarr; @(Model.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA)</div>
+            <div class="mb-1"><strong>Fecha:</strong> @Model.FechaOperacion.ToString("dd/MM/yyyy") (@(Model.Frecuencia?.HoraSalida.ToString(@"hh\:mm")) - @(Model.Frecuencia?.HoraLlegada.ToString(@"hh\:mm")))</div>
+            <div class="mb-1"><strong>Aeronave:</strong> @(Model.Aeronave?.Matricula)</div>
+            <div><strong>Estado Actual:</strong> @Model.EstadoVueloCodigo</div>
+        </div>
+
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+            <div class="d-flex justify-content-end gap-2">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-4">Volver</a>
+                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                    Confirmar Baja / Cancelaci&oacute;n
+                </button>
+            </div>
+        }
+    </div>
 </div>

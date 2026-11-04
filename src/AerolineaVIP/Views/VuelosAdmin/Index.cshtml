@@ -1,87 +1,276 @@
-﻿@model IEnumerable<AerolineaVIP.Models.Vuelo>
-
+@model IEnumerable<AerolineaVIP.Models.Vuelo>
 @{
-    ViewBag.Title = "Gestión de Vuelos VIP";
+    ViewBag.Title = "Pantalla 18: Administración de Vuelos e Itinerarios";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var aeronavesList = ViewBag.AeronavesList as List<AerolineaVIP.Models.Aeronave> ?? new List<AerolineaVIP.Models.Aeronave>();
+    var itinerarios = ViewBag.Itinerarios as List<AerolineaVIP.Models.Itinerario> ?? new List<AerolineaVIP.Models.Itinerario>();
+    string rutaFiltro = ViewBag.RutaFiltro as string ?? "TODAS";
+    string aeronaveFiltro = ViewBag.AeronaveFiltro as string ?? "TODAS";
+    string estadoFiltro = ViewBag.EstadoFiltro as string ?? "TODOS";
+    string fechaDesde = ViewBag.FechaDesde as string ?? "";
+    string fechaHasta = ViewBag.FechaHasta as string ?? "";
 }
 
-<div class="card-avianca p-4 shadow-1 mt-3">
-    <!-- Encabezado de la Pantalla 18 -->
+<div class="my-4">
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span>@TempData["MensajeExito"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span>@TempData["MensajeError"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 border-bottom pb-3">
         <div>
-            <span class="badge-role badge-role-administrador mb-1">Pantalla 18 · Módulo Operativo</span>
-            <h2 class="h3 mb-0">Vuelos Programados</h2>
-            <p class="text-muted small mb-0">Administración de itinerarios y aeronaves asignadas</p>
+            <h1 class="h3 fw-bold text-dark mb-0">Administraci&oacute;n de Vuelos e Itinerarios</h1>
+            <p class="text-muted small mb-0">Programaci&oacute;n de vuelos sobre rutas y frecuencias autorizadas, con validaci&oacute;n de turnaround de 60 min.</p>
         </div>
-        <div>
-            <a href="@Url.Action("Create")" class="btn btn-avianca-primary">
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                &larr; Panel Admin
+            </a>
+            <a href="@Url.Action("Create")" class="btn btn-avianca-primary btn-sm rounded-pill px-4">
                 + Programar Nuevo Vuelo
             </a>
         </div>
     </div>
 
-    <!-- Tabla Estilizada -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th class="small fw-bold text-uppercase">Fecha y Hora</th>
-                    <th class="small fw-bold text-uppercase">Matrícula Aeronave</th>
-                    <th class="small fw-bold text-uppercase">Frecuencia / Ruta</th>
-                    <th class="small fw-bold text-uppercase">Estado</th>
-                    <th class="small fw-bold text-uppercase text-end">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
+    <!-- Barra de Filtros y Generador Masivo (usp_GenerarVuelos) -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card card-avianca p-3 p-md-4 shadow-1 border h-100">
+                <h5 class="h6 fw-bold text-dark mb-3">Filtrar Vuelos Programados</h5>
+                @using (Html.BeginForm("Index", "VuelosAdmin", FormMethod.Get, new { @class = "row g-2 align-items-end" }))
                 {
-                    <tr>
-                        <td colspan="5" class="text-center py-4 text-muted">
-                            No hay vuelos programados actualmente en la base de datos.
-                        </td>
-                    </tr>
+                    <div class="col-sm-4 col-md-3">
+                        <label class="form-label small fw-bold mb-1">Ruta</label>
+                        <select name="ruta" class="form-select form-select-sm">
+                            <option value="TODAS" @(rutaFiltro == "TODAS" ? "selected" : "")>Todas las rutas</option>
+                            <option value="UIO-GYE" @(rutaFiltro == "UIO-GYE" ? "selected" : "")>UIO &rarr; GYE</option>
+                            <option value="GYE-UIO" @(rutaFiltro == "GYE-UIO" ? "selected" : "")>GYE &rarr; UIO</option>
+                            <option value="UIO-MEC" @(rutaFiltro == "UIO-MEC" ? "selected" : "")>UIO &rarr; MEC</option>
+                            <option value="MEC-UIO" @(rutaFiltro == "MEC-UIO" ? "selected" : "")>MEC &rarr; UIO</option>
+                            <option value="GYE-GPS" @(rutaFiltro == "GYE-GPS" ? "selected" : "")>GYE &rarr; GPS</option>
+                            <option value="GPS-GYE" @(rutaFiltro == "GPS-GYE" ? "selected" : "")>GPS &rarr; GYE</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4 col-md-2">
+                        <label class="form-label small fw-bold mb-1">Aeronave</label>
+                        <select name="aeronave" class="form-select form-select-sm">
+                            <option value="TODAS" @(aeronaveFiltro == "TODAS" ? "selected" : "")>Todas</option>
+                            @foreach (var ae in aeronavesList)
+                            {
+                                <option value="@ae.Matricula" @(aeronaveFiltro == ae.Matricula ? "selected" : "")>@ae.Matricula</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-4 col-md-2">
+                        <label class="form-label small fw-bold mb-1">Estado</label>
+                        <select name="estado" class="form-select form-select-sm">
+                            <option value="TODOS" @(estadoFiltro == "TODOS" ? "selected" : "")>Todos</option>
+                            <option value="PROGRAMADO" @(estadoFiltro == "PROGRAMADO" ? "selected" : "")>PROGRAMADO</option>
+                            <option value="COMPLETADO" @(estadoFiltro == "COMPLETADO" ? "selected" : "")>COMPLETADO</option>
+                            <option value="CANCELADO" @(estadoFiltro == "CANCELADO" ? "selected" : "")>CANCELADO</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-md-2">
+                        <label class="form-label small fw-bold mb-1">Desde</label>
+                        <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label class="form-label small fw-bold mb-1">Hasta</label>
+                        <div class="input-group input-group-sm">
+                            <input type="date" name="fechaHasta" value="@fechaHasta" class="form-control form-control-sm" />
+                            <button type="submit" class="btn btn-danger fw-bold">Filtrar</button>
+                        </div>
+                    </div>
                 }
-                else
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card card-avianca p-3 p-md-4 shadow-1 border h-100 bg-light">
+                <h5 class="h6 fw-bold text-danger mb-2">Generaci&oacute;n Autom&aacute;tica por Lote (SP)</h5>
+                <p class="small text-muted mb-2">Ejecuta <code>dbo.usp_GenerarVuelos</code> seg&uacute;n las frecuencias semanales activas.</p>
+                @using (Html.BeginForm("GenerarVuelosMasivo", "VuelosAdmin", FormMethod.Post, new { @class = "row g-2 align-items-end" }))
                 {
-                    foreach (var item in Model)
+                    @Html.AntiForgeryToken()
+                    <div class="col-6">
+                        <label class="form-label small fw-bold mb-1">Inicio</label>
+                        <input type="date" name="fechaInicio" value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold mb-1">Fin</label>
+                        <input type="date" name="fechaFin" value="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-7">
+                        <select name="aeronaveId" class="form-select form-select-sm" required>
+                            @foreach (var ae in aeronavesList.Where(a => a.EstadoAeronaveCodigo == "DISPONIBLE"))
+                            {
+                                <option value="@ae.AeronaveId">@ae.Matricula (DISPONIBLE)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-5">
+                        <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold">Generar Lote</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Vuelos Programados -->
+    <div class="card card-avianca p-4 shadow-1 border mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h5 fw-bold text-dark mb-0">Listado de Vuelos (@Model.Count() registros)</h3>
+            <span class="small text-muted">Capacidad fija: 7 asientos (Embraer Phenom 300E)</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle small mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>C&oacute;digo</th>
+                        <th>Fecha Operaci&oacute;n</th>
+                        <th>Ruta y Horario</th>
+                        <th>Frecuencia</th>
+                        <th>Aeronave</th>
+                        <th>Ocupaci&oacute;n</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
                     {
                         <tr>
-                            <td class="fw-bold">
-                                📅 @item.FechaOperacion.ToString("yyyy-MM-dd HH:mm")
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark border">
-                                    🛩 @(item.Aeronave != null ? item.Aeronave.Matricula : "Sin Asignar")
-                                </span>
-                            </td>
-                            <td>
-                                Frecuencia #@(item.Frecuencia != null ? item.Frecuencia.FrecuenciaId.ToString() : "-")
-                            </td>
-                            <td>
-                                @if (item.EstadoVuelo != null)
-                                {
-                                    <span class="badge bg-success">@item.EstadoVuelo.Descripcion</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Sin Estado</span>
-                                }
-                            </td>
-                            <td class="text-end">
-                                <a href="@Url.Action("Edit", new { id = item.VueloId })" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
-                                    Editar
-                                </a>
-                                <a href="@Url.Action("Details", new { id = item.VueloId })" class="btn btn-sm btn-outline-info me-1" title="Ver Detalles">
-                                    Detalles
-                                </a>
-                                <a href="@Url.Action("Delete", new { id = item.VueloId })" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                    Eliminar
-                                </a>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                No se encontraron vuelos con los criterios seleccionados.
                             </td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            int ocupados = item.ReservaPasajeroVueloes?.Count(r => r.EstadoAsignacionCodigo == "CONFIRMADA" || r.EstadoAsignacionCodigo == "PENDIENTE") ?? 0;
+                            string orig = item.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA ?? "UIO";
+                            string dest = item.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA ?? "GYE";
+                            string diaNom = AerolineaVIP.Controllers.VuelosAdminController.ObtenerNombreDia(item.Frecuencia?.DiaSemana ?? 1);
+
+                            <tr>
+                                <td class="fw-bold font-monospace text-danger">VIP@(item.VueloId.ToString("D5"))</td>
+                                <td class="fw-semibold">
+                                    @item.FechaOperacion.ToString("dd/MM/yyyy")
+                                    <span class="text-muted d-block" style="font-size: 11px;">@diaNom</span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">@orig &rarr; @dest</div>
+                                    <span class="text-muted">@(item.Frecuencia?.HoraSalida.ToString(@"hh\:mm")) - @(item.Frecuencia?.HoraLlegada.ToString(@"hh\:mm")) hrs</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">Frec. #@item.FrecuenciaId (@diaNom)</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark text-white">@(item.Aeronave?.Matricula ?? "AV-01")</span>
+                                </td>
+                                <td>
+                                    <span class="badge @(ocupados >= 7 ? "bg-danger" : "bg-secondary")">@ocupados / 7 plazas</span>
+                                </td>
+                                <td>
+                                    @if (item.EstadoVueloCodigo == "PROGRAMADO")
+                                    {
+                                        <span class="badge bg-primary">PROGRAMADO</span>
+                                    }
+                                    else if (item.EstadoVueloCodigo == "COMPLETADO")
+                                    {
+                                        <span class="badge bg-success">COMPLETADO</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@item.EstadoVueloCodigo</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = item.VueloId })" class="btn btn-sm btn-outline-dark py-0 px-2" title="Ver mapa de cabina">
+                                            Cabina
+                                        </a>
+                                        <a href="@Url.Action("Edit", new { id = item.VueloId })" class="btn btn-sm btn-outline-primary py-0 px-2">
+                                            Editar
+                                        </a>
+                                        <a href="@Url.Action("Details", new { id = item.VueloId })" class="btn btn-sm btn-outline-secondary py-0 px-2">
+                                            Detalle
+                                        </a>
+                                        <a href="@Url.Action("Delete", new { id = item.VueloId })" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                            Eliminar
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sección de Itinerarios Compuestos (Itinerario / TramoItinerario - DP-04) -->
+    <div class="card card-avianca p-4 shadow-1 border">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3 class="h5 fw-bold text-dark mb-0">Itinerarios Compuestos Registrados (Conexiones Dominicales UIO &harr; GPS v&iacute;a GYE)</h3>
+                <p class="small text-muted mb-0">Trazabilidad de tramos secuenciales en <code>dbo.Itinerario</code> y <code>dbo.TramoItinerario</code> conforme a DP-04.</p>
+            </div>
+            <span class="badge bg-danger text-white">@itinerarios.Count itinerario(s)</span>
+        </div>
+
+        @if (!itinerarios.Any())
+        {
+            <p class="small text-muted mb-0">No existen itinerarios compuestos registrados.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>C&oacute;digo Itinerario</th>
+                            <th>Descripci&oacute;n</th>
+                            <th>Tramos Secuenciales Asociados</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var it in itinerarios)
+                        {
+                            <tr>
+                                <td class="fw-bold font-monospace text-danger">@it.CodigoItinerario</td>
+                                <td>@it.Descripcion</td>
+                                <td>
+                                    @foreach (var tramo in it.TramoItinerarios.OrderBy(t => t.NumeroOrden))
+                                    {
+                                        var vTramo = tramo.Vuelo;
+                                        <span class="badge bg-light text-dark border me-2">
+                                            Tramo #@tramo.NumeroOrden: VIP@(tramo.VueloId.ToString("D5"))
+                                            (@(vTramo?.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA) &rarr; @(vTramo?.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA) &bull; @(vTramo?.FechaOperacion.ToString("dd/MM/yyyy")) @(vTramo?.Frecuencia?.HoraSalida.ToString(@"hh\:mm")))
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>

@@ -1,89 +1,28 @@
-﻿@model AerolineaVIP.Models.Pasajero
-
+@model AerolineaVIP.Models.Pasajero
 @{
-    ViewBag.Title = "Delete";
+    ViewBag.Title = "Eliminar Pasajero (Pantalla 20)";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Delete</h2>
-
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Pasajero</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.NumeroDocumento)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.NumeroDocumento)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Nombres)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Nombres)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Apellidos)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Apellidos)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.FechaNacimiento)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.FechaNacimiento)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Correo)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Correo)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Telefono)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Telefono)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.FechaRegistro)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.FechaRegistro)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.TipoDocumentoIdentidad.Descripcion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.TipoDocumentoIdentidad.Descripcion)
-        </dd>
-
-    </dl>
-
-    @using (Html.BeginForm()) {
-        @Html.AntiForgeryToken()
-
-        <div class="form-actions no-color">
-            <input type="submit" value="Delete" class="btn btn-default" /> |
-            @Html.ActionLink("Back to List", "Index")
+<div class="container my-4">
+    <div class="card card-avianca p-4 shadow-1 border mx-auto" style="max-width: 660px;">
+        <div class="border-bottom pb-3 mb-4">
+            <h2 class="h4 fw-bold text-dark mb-0">&iquest;Confirma eliminar a @Model.Nombres @Model.Apellidos?</h2>
         </div>
-    }
+
+        <div class="bg-light p-3 rounded border small mb-4">
+            <div><strong>Documento:</strong> @Model.TipoDocumentoCodigo @Model.NumeroDocumento</div>
+            <div><strong>Correo:</strong> @Model.Correo</div>
+            <div><strong>Reservas asociadas:</strong> @(Model.ReservaPasajeroVueloes?.Count ?? 0)</div>
+        </div>
+
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+            <div class="d-flex justify-content-end gap-2">
+                <a href="@Url.Action("Index", new { tab = "pasajeros" })" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Eliminar Registro</button>
+            </div>
+        }
+    </div>
 </div>

@@ -1,17 +1,30 @@
-﻿@using Microsoft.AspNet.Identity
+@using Microsoft.AspNet.Identity
 
 <header>
     <nav class="navbar navbar-expand-lg navbar-avianca fixed-top" aria-label="Navegación principal">
         <div class="container">
             <!-- Logotipo Corporativo -->
-            <a class="navbar-brand-avianca" href="@Url.Action("Index", "Home", new { area = "" })" title="Aerolínea VIP - Inicio">
+            @{
+                string brandUrl = Url.Action("Index", "Home", new { area = "" });
+                if (Request.IsAuthenticated)
+                {
+                    if (User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))
+                    {
+                        brandUrl = Url.Action("Index", "Admin", new { area = "" });
+                    }
+                    else if (User.IsInRole("Counter"))
+                    {
+                        brandUrl = Url.Action("Index", "Counter", new { area = "" });
+                    }
+                }
+            }
+            <a class="navbar-brand-avianca" href="@brandUrl" title="Aerolínea VIP">
                 <span class="brand-icon-flight" aria-hidden="true">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
                     </svg>
                 </span>
                 <span>AEROLÍNEA <span class="brand-text-accent">VIP</span></span>
-                <span class="brand-badge-tag">EXECUTIVE</span>
             </a>
 
             <!-- Botón Toggler para móviles -->
@@ -23,15 +36,15 @@
             <!-- Menú de Navegación -->
             <div class="collapse navbar-collapse justify-content-between" id="navbarPrincipal">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
-                           href="@Url.Action("Index", "Home", new { area = "" })">
-                            Inicio
-                        </a>
-                    </li>
-
-                    @if (!Request.IsAuthenticated || User.IsInRole("Cliente"))
+                    @if (!Request.IsAuthenticated)
                     {
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                               href="@Url.Action("Index", "Home", new { area = "" })">
+                                Inicio
+                            </a>
+                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vuelos" ? "active" : "")"
                                href="@Url.Action("Buscar", "Vuelos", new { area = "" })">
@@ -39,78 +52,90 @@
                             </a>
                         </li>
                     }
-
-                    @if (Request.IsAuthenticated)
+                    else if (User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))
                     {
-                        if (User.IsInRole("Cliente") || User.IsInRole("SuperUsuario") || User.IsInRole("Administrador"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reservas" && ViewContext.RouteData.Values["action"]?.ToString() == "MisReservas" ? "active" : "")"
-                                   href="@Url.Action("MisReservas", "Reservas", new { area = "" })">
-                                    Mis Reservas
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "CheckIn" ? "active" : "")"
-                                   href="@Url.Action("Index", "CheckIn", new { area = "" })">
-                                    Check-in
-                                </a>
-                            </li>
-                        }
-
-
-
-                        if (User.IsInRole("Counter") || User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Counter" ? "active" : "")"
-                                   href="@Url.Action("Index", "Counter", new { area = "" })">
-                                    Atención Counter
-                                </a>
-                            </li>
-                        }
-
-
-                        if (User.IsInRole("Administrador") || User.IsInRole("SuperUsuario"))
-                        {
-                                <li class="nav-item">
-                                    <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
-                                       href="@Url.Action("Index", "Admin", new { area = "" })">
-                                        Panel Admin
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "Admin", new { area = "" })">
+                                Panel Admin
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link-avianca dropdown-toggle @(new[] { "VuelosAdmin", "AeronavesAdmin", "PasajerosAdmin" }.Contains(ViewContext.RouteData.Values["controller"]?.ToString()) || (ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Reportes") ? "active" : "")"
+                               href="#" id="adminDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                Gestión Operativa
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-avianca" aria-labelledby="adminDropdown">
+                                <li>
+                                    <a class="dropdown-item-avianca" href="@Url.Action("Index", "VuelosAdmin", new { area = "" })">
+                                        Vuelos Programados
                                     </a>
                                 </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link-avianca dropdown-toggle" href="#" id="adminDropdown" role="button"
-                                       data-bs-toggle="dropdown" aria-expanded="false">
-                                        Gestión Operativa
+                                <li>
+                                    <a class="dropdown-item-avianca" href="@Url.Action("Index", "AeronavesAdmin", new { area = "" })">
+                                        Flota Phenom 300E
                                     </a>
-                                    <ul class="dropdown-menu dropdown-menu-avianca" aria-labelledby="adminDropdown">
-                                        <li>
-                                            <a class="dropdown-item-avianca" href="@Url.Action("Index", "VuelosAdmin", new { area = "" })">
-                                                Vuelos Programados
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item-avianca" href="@Url.Action("Index", "AeronavesAdmin", new { area = "" })">
-                                                Flota Phenom 300E
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item-avianca" href="@Url.Action("Index", "PasajerosAdmin", new { area = "" })">
-                                                Pasajeros Registrados
-                                            </a>
-                                        </li>
-                                        <li><hr class="dropdown-divider-avianca" /></li>
-                                        <li>
-                                            <a class="dropdown-item-avianca" href="@Url.Action("Reportes", "Admin", new { area = "" })">
-                                                Reportes Ejecutivos
-                                            </a>
-                                        </li>
-                                    </ul>
                                 </li>
-                            }
-                        }
-                    </ul>
+                                <li>
+                                    <a class="dropdown-item-avianca" href="@Url.Action("Index", "PasajerosAdmin", new { area = "" })">
+                                        Usuarios, Pasajeros y Reservas
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider-avianca" /></li>
+                                <li>
+                                    <a class="dropdown-item-avianca" href="@Url.Action("Reportes", "Admin", new { area = "" })">
+                                        Reportes Ejecutivos
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else if (User.IsInRole("Counter"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Counter" ? "active" : "")"
+                               href="@Url.Action("Index", "Counter", new { area = "" })">
+                                Atención Counter
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                               href="@Url.Action("Index", "Home", new { area = "" })">
+                                Inicio
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vuelos" ? "active" : "")"
+                               href="@Url.Action("Buscar", "Vuelos", new { area = "" })">
+                                Buscar Vuelos
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reservas" && ViewContext.RouteData.Values["action"]?.ToString() == "MisReservas" ? "active" : "")"
+                               href="@Url.Action("MisReservas", "Reservas", new { area = "" })">
+                                Mis Reservas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "CheckIn" ? "active" : "")"
+                               href="@Url.Action("Index", "CheckIn", new { area = "" })">
+                                Check-in
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link-avianca @(ViewContext.RouteData.Values["controller"]?.ToString() == "Comprobantes" ? "active" : "")"
+                               href="@Url.Action("Index", "Comprobantes", new { area = "" })">
+                                Comprobantes
+                            </a>
+                        </li>
+                    }
+                </ul>
 
                 <!-- Acciones de Cuenta / Perfil -->
                 <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">

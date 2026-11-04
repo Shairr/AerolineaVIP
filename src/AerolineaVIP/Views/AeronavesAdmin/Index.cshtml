@@ -1,46 +1,121 @@
-﻿@model IEnumerable<AerolineaVIP.Models.Aeronave>
-
+@model IEnumerable<AerolineaVIP.Models.Aeronave>
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Pantalla 19: Gestión de Aeronaves (Flota Phenom 300E)";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+<div class="my-4">
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span>@TempData["MensajeExito"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
-<table class="table">
-    <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.Matricula)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.EstadoAeronave.Descripcion)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.ModeloAeronave.Fabricante)
-        </th>
-        <th></th>
-    </tr>
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 border-bottom pb-3">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-0">Gesti&oacute;n de Aeronaves</h1>
+            <p class="text-muted small mb-0">Control de matr&iacute;culas y estado de disponibilidad operativa (<code>DISPONIBLE</code> / <code>NO_DISPONIBLE</code>) para el modelo Embraer Phenom 300E (7 plazas).</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                &larr; Panel Admin
+            </a>
+            <a href="@Url.Action("Create")" class="btn btn-avianca-primary btn-sm rounded-pill px-4">
+                + Registrar Nueva Aeronave
+            </a>
+        </div>
+    </div>
 
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.Matricula)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.EstadoAeronave.Descripcion)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.ModeloAeronave.Fabricante)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.AeronaveId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.AeronaveId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.AeronaveId })
-        </td>
-    </tr>
-}
+    <!-- Tarjetas Resumen de Flota -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card card-avianca p-3 border shadow-sm">
+                <span class="small text-muted">Total Aeronaves en Flota</span>
+                <strong class="h3 fw-bold text-dark mb-0">@Model.Count() unidades</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-avianca p-3 border shadow-sm">
+                <span class="small text-muted">Aeronaves Operativas (DISPONIBLE)</span>
+                <strong class="h3 fw-bold text-success mb-0">@Model.Count(a => a.EstadoAeronaveCodigo == "DISPONIBLE") disponibles</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-avianca p-3 border shadow-sm">
+                <span class="small text-muted">En Mantenimiento (NO_DISPONIBLE)</span>
+                <strong class="h3 fw-bold text-danger mb-0">@Model.Count(a => a.EstadoAeronaveCodigo != "DISPONIBLE") en revisi&oacute;n</strong>
+            </div>
+        </div>
+    </div>
 
-</table>
+    <!-- Tabla de Aeronaves -->
+    <div class="card card-avianca p-4 shadow-1 border">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase">
+                    <tr>
+                        <th>Matr&iacute;cula</th>
+                        <th>Modelo Homologado</th>
+                        <th>Capacidad</th>
+                        <th>Vuelos Asignados</th>
+                        <th>Estado Operativo (RNP-08)</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        bool disponible = item.EstadoAeronaveCodigo == "DISPONIBLE";
+                        int totalVuelos = item.Vueloes?.Count ?? 0;
+                        int vuelosProgramados = item.Vueloes?.Count(v => v.EstadoVueloCodigo == "PROGRAMADO") ?? 0;
+
+                        <tr>
+                            <td class="fw-bold font-monospace fs-5 text-dark">
+                                &#9992; @item.Matricula
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">@(item.ModeloAeronave?.Fabricante ?? "Embraer") @(item.ModeloAeronave?.Nombre ?? "Phenom 300E")</div>
+                                <span class="text-muted small">Cabina ejecutiva presurizada</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@(item.ModeloAeronave?.CapacidadAsientos ?? 7) asientos VIP</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">@totalVuelos total</span>
+                                <span class="text-muted small d-block">(@vuelosProgramados programados)</span>
+                            </td>
+                            <td>
+                                @if (disponible)
+                                {
+                                    <span class="badge bg-success px-3 py-1 rounded-pill">DISPONIBLE</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger px-3 py-1 rounded-pill">NO DISPONIBLE</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    @using (Html.BeginForm("AlternarDisponibilidad", "AeronavesAdmin", new { id = item.AeronaveId }, FormMethod.Post, new { @class = "d-inline" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm @(disponible ? "btn-outline-warning" : "btn-outline-success")">
+                                            @(disponible ? "Pasar a Mantenimiento" : "Habilitar Operación")
+                                        </button>
+                                    }
+                                    <a href="@Url.Action("Edit", new { id = item.AeronaveId })" class="btn btn-sm btn-outline-primary">Editar</a>
+                                    <a href="@Url.Action("Details", new { id = item.AeronaveId })" class="btn btn-sm btn-outline-secondary">Detalles</a>
+                                    <a href="@Url.Action("Delete", new { id = item.AeronaveId })" class="btn btn-sm btn-outline-danger">Baja</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

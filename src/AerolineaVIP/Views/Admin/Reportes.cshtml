@@ -1,118 +1,261 @@
-﻿@{
-    ViewBag.Title = "Consultas y reportes administrativos";
+@model AerolineaVIP.Models.AdminReportesViewModel
+@{
+    ViewBag.Title = "Pantalla 21: Consultas y Reportes Administrativos";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="card-avianca p-4 shadow-1 my-3">
-    <!-- Formulario de Filtros del Wireframe -->
-    <form method="get" class="mb-4">
-        <!-- Fila 1: Consulta *, Fecha desde *, Fecha hasta * -->
-        <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-                <label class="form-label small fw-bold">Consulta *</label>
-                <select name="consulta" class="form-select form-control">
-                    <option selected>Ocupación por vuelo</option>
-                    <option>Reservas por estado</option>
-                    <option>Compras y pagos simulados</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-4">
-                <label class="form-label small fw-bold">Fecha desde *</label>
-                <input type="text" class="form-control" placeholder="dd/mm/aaaa" value="01/10/2026" />
-            </div>
-            <div class="col-12 col-md-4">
-                <label class="form-label small fw-bold">Fecha hasta *</label>
-                <input type="text" class="form-control" placeholder="dd/mm/aaaa" value="30/11/2026" />
-            </div>
+<div class="my-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 border-bottom pb-3">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-0">Consultas y Reportes Administrativos</h1>
+            <p class="text-muted small mb-0">Consultas en tiempo real sobre la base de datos SQL Server: ocupaci&oacute;n por vuelo, reservas por estado y auditor&iacute;a de pagos simulados.</p>
         </div>
-
-        <!-- Fila 2: Ruta (opcional), Aeronave (opcional), Estado (opcional) -->
-        <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-                <label class="form-label small text-muted">Ruta (opcional)</label>
-                <select name="ruta" class="form-select form-control">
-                    <option selected>Todas</option>
-                    <option>UIO → GYE (Quito a Guayaquil)</option>
-                    <option>UIO → MEC (Quito a Manta)</option>
-                    <option>GYE → GPS (Guayaquil a Galápagos)</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-4">
-                <label class="form-label small text-muted">Aeronave (opcional)</label>
-                <select name="aeronave" class="form-select form-control">
-                    <option selected>Todas</option>
-                    <option>AV-01</option>
-                    <option>AV-02</option>
-                    <option>AV-03</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-4">
-                <label class="form-label small text-muted">Estado (opcional)</label>
-                <select name="estado" class="form-select form-control">
-                    <option selected>Todos</option>
-                    <option>Programado</option>
-                    <option>Completado</option>
-                    <option>Cancelado</option>
-                </select>
-            </div>
+        <div>
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                &larr; Panel Admin
+            </a>
         </div>
-
-        <!-- Botones del Wireframe -->
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-            <button type="button" class="btn btn-avianca-primary">
-                Consultar
-            </button>
-            <button type="button" class="btn btn-avianca-outline-sm">
-                Actualizar resultados
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" style="border-style: dashed;" disabled title="Visible solo si la función se aprueba">
-                Exportar
-            </button>
-        </div>
-    </form>
-
-    <!-- Leyenda Informativa del Wireframe -->
-    <div class="text-muted small mb-3 border-top pt-3">
-        Datos con corte al 22/10/2026 10:45 · Disponibles = Capacidad − Ocupados (asientos reservados u ocupados)
     </div>
 
-    <!-- Tabla con los datos exactos del Wireframe de la imagen -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th class="small fw-bold">Vuelo</th>
-                    <th class="small fw-bold">Fecha</th>
-                    <th class="small fw-bold">Ruta</th>
-                    <th class="small fw-bold">Aeronave</th>
-                    <th class="small fw-bold">Capacidad</th>
-                    <th class="small fw-bold">Ocupados</th>
-                    <th class="small fw-bold">Disponibles</th>
-                    <th class="small fw-bold">Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="fw-bold">VIP00042</td>
-                    <td>08/11/2026</td>
-                    <td>UIO → GYE</td>
-                    <td>AV-03</td>
-                    <td>7</td>
-                    <td>3</td>
-                    <td>4</td>
-                    <td><span class="badge bg-primary">Programado</span></td>
-                </tr>
-                <tr>
-                    <td class="fw-bold">VIP00022</td>
-                    <td>18/10/2026</td>
-                    <td>GYE → GPS</td>
-                    <td>AV-03</td>
-                    <td>7</td>
-                    <td>7</td>
-                    <td>0</td>
-                    <td><span class="badge bg-secondary">Completado</span></td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="card card-avianca p-4 shadow-1 border">
+        <!-- Formulario de Filtros del Wireframe 21 -->
+        @using (Html.BeginForm("Reportes", "Admin", FormMethod.Get, new { @class = "mb-4" }))
+        {
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-bold text-dark">Consulta / Tipo de Reporte *</label>
+                    <select name="tipoConsulta" class="form-select" onchange="this.form.submit()">
+                        <option value="OCUPACION" @(Model.TipoConsulta == "OCUPACION" ? "selected" : "")>1. Ocupación por vuelo (Cabina Phenom 300E)</option>
+                        <option value="RESERVAS" @(Model.TipoConsulta == "RESERVAS" ? "selected" : "")>2. Reservas por estado (Confirmadas, Pendientes, Canceladas)</option>
+                        <option value="COMPRAS" @(Model.TipoConsulta == "COMPRAS" ? "selected" : "")>3. Compras y pagos simulados (DP-06)</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-bold text-dark">Fecha desde *</label>
+                    <input type="date" name="fechaDesde" class="form-control" value="@(Model.FechaDesde.HasValue ? Model.FechaDesde.Value.ToString("yyyy-MM-dd") : "2026-03-01")" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-bold text-dark">Fecha hasta *</label>
+                    <input type="date" name="fechaHasta" class="form-control" value="@(Model.FechaHasta.HasValue ? Model.FechaHasta.Value.ToString("yyyy-MM-dd") : "2026-12-31")" />
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Ruta (opcional)</label>
+                    <select name="ruta" class="form-select">
+                        <option value="TODAS" @(Model.RutaFiltro == "TODAS" ? "selected" : "")>Todas las rutas</option>
+                        <option value="UIO-GYE" @(Model.RutaFiltro == "UIO-GYE" ? "selected" : "")>UIO &rarr; GYE (Quito a Guayaquil)</option>
+                        <option value="GYE-UIO" @(Model.RutaFiltro == "GYE-UIO" ? "selected" : "")>GYE &rarr; UIO (Guayaquil a Quito)</option>
+                        <option value="UIO-MEC" @(Model.RutaFiltro == "UIO-MEC" ? "selected" : "")>UIO &rarr; MEC (Quito a Manta)</option>
+                        <option value="MEC-UIO" @(Model.RutaFiltro == "MEC-UIO" ? "selected" : "")>MEC &rarr; UIO (Manta a Quito)</option>
+                        <option value="GYE-GPS" @(Model.RutaFiltro == "GYE-GPS" ? "selected" : "")>GYE &rarr; GPS (Guayaquil a Galápagos)</option>
+                        <option value="GPS-GYE" @(Model.RutaFiltro == "GPS-GYE" ? "selected" : "")>GPS &rarr; GYE (Galápagos a Guayaquil)</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Aeronave (opcional)</label>
+                    <select name="aeronave" class="form-select">
+                        <option value="TODAS" @(Model.AeronaveFiltro == "TODAS" ? "selected" : "")>Todas</option>
+                        <option value="AV-01" @(Model.AeronaveFiltro == "AV-01" ? "selected" : "")>AV-01</option>
+                        <option value="AV-02" @(Model.AeronaveFiltro == "AV-02" ? "selected" : "")>AV-02</option>
+                        <option value="AV-03" @(Model.AeronaveFiltro == "AV-03" ? "selected" : "")>AV-03</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Estado (opcional)</label>
+                    <select name="estado" class="form-select">
+                        <option value="TODOS" @(Model.EstadoFiltro == "TODOS" ? "selected" : "")>Todos</option>
+                        @if (Model.TipoConsulta == "OCUPACION")
+                        {
+                            <option value="PROGRAMADO" @(Model.EstadoFiltro == "PROGRAMADO" ? "selected" : "")>PROGRAMADO</option>
+                            <option value="COMPLETADO" @(Model.EstadoFiltro == "COMPLETADO" ? "selected" : "")>COMPLETADO</option>
+                            <option value="CANCELADO" @(Model.EstadoFiltro == "CANCELADO" ? "selected" : "")>CANCELADO</option>
+                        }
+                        else if (Model.TipoConsulta == "RESERVAS")
+                        {
+                            <option value="CONFIRMADA" @(Model.EstadoFiltro == "CONFIRMADA" ? "selected" : "")>CONFIRMADA</option>
+                            <option value="PENDIENTE" @(Model.EstadoFiltro == "PENDIENTE" ? "selected" : "")>PENDIENTE</option>
+                            <option value="CANCELADA" @(Model.EstadoFiltro == "CANCELADA" ? "selected" : "")>CANCELADA</option>
+                            <option value="EXPIRADA" @(Model.EstadoFiltro == "EXPIRADA" ? "selected" : "")>EXPIRADA</option>
+                        }
+                        else
+                        {
+                            <option value="APROBADO" @(Model.EstadoFiltro == "APROBADO" ? "selected" : "")>APROBADO</option>
+                            <option value="RECHAZADO" @(Model.EstadoFiltro == "RECHAZADO" ? "selected" : "")>RECHAZADO</option>
+                            <option value="REVERSADO" @(Model.EstadoFiltro == "REVERSADO" ? "selected" : "")>REVERSADO</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botones del Wireframe 21 -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="submit" class="btn btn-avianca-primary">
+                    Consultar
+                </button>
+                <a href="@Url.Action("Reportes", "Admin", new { tipoConsulta = Model.TipoConsulta })" class="btn btn-avianca-outline-sm">
+                    Restablecer filtros
+                </a>
+                <a href="@Url.Action("ExportarReporteCsv", "Admin", new { tipoConsulta = Model.TipoConsulta, fechaDesde = Model.FechaDesde?.ToString("yyyy-MM-dd"), fechaHasta = Model.FechaHasta?.ToString("yyyy-MM-dd"), ruta = Model.RutaFiltro, aeronave = Model.AeronaveFiltro, estado = Model.EstadoFiltro })" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                    &#128190; Exportar CSV
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="window.print();">
+                    &#128424; Imprimir Reporte
+                </button>
+            </div>
+        }
+
+        <!-- Leyenda Informativa del Wireframe -->
+        <div class="text-muted small mb-3 border-top pt-3">
+            Datos consultados en tiempo real al @DateTime.Now.ToString("dd/MM/yyyy HH:mm") &bull; Disponibles = Capacidad (7) &minus; (Ocupados en Rojo + Reservados en Morado)
+        </div>
+
+        <!-- =====================================================================
+             TABLA 1: OCUPACIÓN POR VUELO
+             ===================================================================== -->
+        @if (Model.TipoConsulta == "OCUPACION")
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Vuelo</th>
+                            <th>Fecha y Horario</th>
+                            <th>Ruta</th>
+                            <th>Aeronave</th>
+                            <th class="text-center">Capacidad</th>
+                            <th class="text-center">Ocupados (Rojo)</th>
+                            <th class="text-center">Reservados (Morado)</th>
+                            <th class="text-center">Disponibles (Verde)</th>
+                            <th class="text-center">% Ocupaci&oacute;n</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OcupacionVuelos)
+                        {
+                            <tr>
+                                <td class="fw-bold font-monospace text-danger">
+                                    <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = item.VueloId })" class="text-danger text-decoration-none">@item.CodigoVuelo</a>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@item.FechaOperacion.ToString("dd/MM/yyyy")</div>
+                                    <span class="text-muted" style="font-size: 11px;">@item.Horario</span>
+                                </td>
+                                <td class="fw-bold">@item.Ruta</td>
+                                <td><span class="badge bg-dark text-white">@item.AeronaveMatricula</span></td>
+                                <td class="text-center fw-bold">@item.Capacidad</td>
+                                <td class="text-center"><span class="badge bg-danger">@item.OcupadosConfirmados</span></td>
+                                <td class="text-center"><span class="badge text-white" style="background-color: #6F42C1;">@item.ReservadosPendientes</span></td>
+                                <td class="text-center"><span class="badge bg-success">@item.Disponibles</span></td>
+                                <td class="text-center fw-bold">@item.PorcentajeOcupacion.ToString("N1")%</td>
+                                <td>
+                                    <span class="badge @(item.EstadoVuelo == "PROGRAMADO" ? "bg-primary" : (item.EstadoVuelo == "COMPLETADO" ? "bg-secondary" : "bg-danger"))">
+                                        @item.EstadoVuelo
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else if (Model.TipoConsulta == "RESERVAS")
+        {
+            <!-- =====================================================================
+                 TABLA 2: RESERVAS POR ESTADO
+                 ===================================================================== -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>C&oacute;digo Reserva</th>
+                            <th>Fecha Creaci&oacute;n</th>
+                            <th>Ruta</th>
+                            <th>Fecha Vuelo</th>
+                            <th class="text-center">Pasajeros</th>
+                            <th class="text-end">Importe Total</th>
+                            <th class="text-center">Check-in</th>
+                            <th>Estado Reserva</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.ReservasPorEstado)
+                        {
+                            <tr>
+                                <td class="fw-bold font-monospace text-danger">
+                                    <a href="@Url.Action("Gestionar", "Reservas", new { id = r.CodigoReserva })" class="text-danger text-decoration-none">@r.CodigoReserva</a>
+                                </td>
+                                <td>@r.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="fw-bold">@r.Ruta</td>
+                                <td>@r.FechaVuelo.ToString("dd/MM/yyyy")</td>
+                                <td class="text-center">@r.CantidadPasajeros</td>
+                                <td class="text-end font-monospace fw-bold">USD @r.ImporteTotal.ToString("N2")</td>
+                                <td class="text-center">
+                                    @if (r.TieneCheckIn)
+                                    {
+                                        <span class="badge bg-success">COMPLETADO</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-muted border">PENDIENTE</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge @(r.EstadoReserva == "CONFIRMADA" ? "bg-success" : (r.EstadoReserva == "PENDIENTE" ? "bg-warning text-dark" : "bg-secondary"))">
+                                        @r.EstadoReserva
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <!-- =====================================================================
+                 TABLA 3: COMPRAS Y PAGOS SIMULADOS (DP-06)
+                 ===================================================================== -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>C&oacute;digo Operaci&oacute;n</th>
+                            <th>Reserva</th>
+                            <th>Fecha Pago</th>
+                            <th>M&eacute;todo / Marca</th>
+                            <th>Tarjeta</th>
+                            <th class="text-end">Importe</th>
+                            <th>Estado Compra</th>
+                            <th>Estado Pago</th>
+                            <th>Resultado Simulado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.ComprasPagos)
+                        {
+                            <tr>
+                                <td class="font-monospace fw-bold text-dark">@c.CodigoOperacion</td>
+                                <td class="font-monospace fw-bold text-danger">@c.CodigoReserva</td>
+                                <td>@c.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@c.MetodoYMarca</td>
+                                <td class="font-monospace">**** @c.UltimosCuatro</td>
+                                <td class="text-end font-monospace fw-bold">USD @c.Importe.ToString("N2")</td>
+                                <td><span class="badge bg-dark">@c.EstadoCompra</span></td>
+                                <td>
+                                    <span class="badge @(c.EstadoPago == "APROBADO" ? "bg-success" : (c.EstadoPago == "RECHAZADO" ? "bg-danger" : "bg-warning text-dark"))">
+                                        @c.EstadoPago
+                                    </span>
+                                </td>
+                                <td class="text-muted" style="font-size: 11px;">@c.MensajeResultado</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>

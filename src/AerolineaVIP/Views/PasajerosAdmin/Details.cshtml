@@ -1,83 +1,69 @@
-﻿@model AerolineaVIP.Models.Pasajero
-
+@model AerolineaVIP.Models.Pasajero
 @{
-    ViewBag.Title = "Details";
+    ViewBag.Title = "Detalles del Pasajero " + Model.Nombres + " " + Model.Apellidos;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Details</h2>
+<div class="container my-4">
+    <div class="card card-avianca p-4 shadow-1 border mx-auto" style="max-width: 780px;">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold text-dark mb-0">@Model.Nombres @Model.Apellidos</h2>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="@Url.Action("Edit", new { id = Model.PasajeroId })" class="btn btn-avianca-primary-sm rounded-pill px-3">Editar</a>
+                <a href="@Url.Action("Index", new { tab = "pasajeros" })" class="btn btn-outline-secondary btn-sm rounded-pill px-3">&larr; Volver</a>
+            </div>
+        </div>
 
-<div>
-    <h4>Pasajero</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.NumeroDocumento)
-        </dt>
+        <div class="row g-3 small mb-4">
+            <div class="col-md-4">
+                <span class="text-muted d-block">Documento:</span>
+                <strong class="font-monospace text-dark">@Model.TipoDocumentoCodigo: @Model.NumeroDocumento</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted d-block">Fecha de Nacimiento:</span>
+                <strong class="text-dark">@Model.FechaNacimiento.ToString("dd/MM/yyyy")</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted d-block">Contacto:</span>
+                <strong class="text-dark">@Model.Correo</strong>
+                <div class="text-secondary">@Model.Telefono</div>
+            </div>
+        </div>
 
-        <dd>
-            @Html.DisplayFor(model => model.NumeroDocumento)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Nombres)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Nombres)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Apellidos)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Apellidos)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.FechaNacimiento)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.FechaNacimiento)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Correo)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Correo)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.Telefono)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Telefono)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.FechaRegistro)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.FechaRegistro)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.TipoDocumentoIdentidad.Descripcion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.TipoDocumentoIdentidad.Descripcion)
-        </dd>
-
-    </dl>
+        <h5 class="h6 fw-bold text-dark border-bottom pb-2 mb-3">Historial de Vuelos y Reservas (@(Model.ReservaPasajeroVueloes?.Count ?? 0))</h5>
+        @if (Model.ReservaPasajeroVueloes != null && Model.ReservaPasajeroVueloes.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Reserva</th>
+                            <th>Vuelo</th>
+                            <th>Ruta</th>
+                            <th>Asiento</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Model.ReservaPasajeroVueloes)
+                        {
+                            <tr>
+                                <td class="font-monospace fw-bold text-danger">@(a.Reserva?.CodigoReserva)</td>
+                                <td class="font-monospace">VIP@(a.VueloId.ToString("D5")) (@(a.Vuelo?.FechaOperacion.ToString("dd/MM/yyyy")))</td>
+                                <td>@(a.Vuelo?.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA) &rarr; @(a.Vuelo?.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA)</td>
+                                <td><span class="badge bg-danger">@AerolineaVIP.Controllers.VuelosController.MapearNumeroAsientoACodigo(a.NumeroAsiento)</span></td>
+                                <td><span class="badge bg-secondary">@a.EstadoAsignacionCodigo</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="small text-muted mb-0">Este pasajero no registra reservas todav&iacute;a.</p>
+        }
+    </div>
 </div>
-<p>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.PasajeroId }) |
-    @Html.ActionLink("Back to List", "Index")
-</p>

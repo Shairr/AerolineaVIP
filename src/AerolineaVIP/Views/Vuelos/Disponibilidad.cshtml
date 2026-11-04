@@ -14,14 +14,9 @@
         </ol>
     </nav>
 
-    <!-- Encabezado de la Pantalla 7 -->
+    <!-- Encabezado -->
     <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 7</span>
-                <span class="badge bg-dark rounded-pill px-3 py-1">Solo Lectura</span>
-                <span class="small text-muted">Aeronave Oficial: @Model.ModeloAeronave</span>
-            </div>
             <h1 class="h2 fw-bold text-dark mb-0">
                 Disponibilidad y Mapa de Cabina
             </h1>
@@ -35,13 +30,6 @@
                class="btn btn-outline-secondary btn-sm">
                 &larr; Volver a resultados
             </a>
-            @if (Model.AsientosDisponibles > 0)
-            {
-                <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = Model.VueloId, tarifa = "Classic", pasajeros = 1 })" 
-                   class="btn btn-avianca-primary btn-sm">
-                    Reservar en este vuelo &rarr;
-                </a>
-            }
         </div>
     </div>
 
@@ -149,7 +137,7 @@
             <!-- Ficha Técnica del Embraer Phenom 300E -->
             <div class="card card-avianca p-4 shadow-1 mb-4">
                 <h3 class="h5 fw-bold text-dark mb-3">Confort a Bordo del Embraer Phenom 300E</h3>
-                <ul class="list-unstyled small text-secondary mb-4">
+                <ul class="list-unstyled small text-secondary mb-0">
                     <li class="mb-2 d-flex align-items-center gap-2">
                         <span class="text-danger fw-bold">&#10003;</span>
                         <span><strong>Configuraci&oacute;n Club Seating:</strong> Asientos de cuero con rotaci&oacute;n y reclinaci&oacute;n completa en filas 2 y 3.</span>
@@ -162,25 +150,11 @@
                         <span class="text-danger fw-bold">&#10003;</span>
                         <span><strong>Ba&ntilde;o Privado Posterior:</strong> Lavatorio cerrado de lujo en la parte trasera de cabina.</span>
                     </li>
-                    <li class="mb-2 d-flex align-items-center gap-2">
+                    <li class="mb-0 d-flex align-items-center gap-2">
                         <span class="text-danger fw-bold">&#10003;</span>
                         <span><strong>Presurizaci&oacute;n de Mejor Clase:</strong> Menor fatiga y viaje supersilencioso a 45,000 pies.</span>
                     </li>
                 </ul>
-
-                @if (Model.AsientosDisponibles > 0)
-                {
-                    <a href="@Url.Action("SeleccionarAsientos", "Reservas", new { vueloId = Model.VueloId, tarifa = "Classic", pasajeros = 1 })" 
-                       class="btn btn-avianca-primary w-100 py-3 fw-bold">
-                        Proceder a la Reserva de Asientos (P8) &rarr;
-                    </a>
-                }
-                else
-                {
-                    <div class="alert alert-warning small mb-0 text-center">
-                        Este vuelo no dispone de cupos libres actualmente.
-                    </div>
-                }
             </div>
         </div>
     </div>

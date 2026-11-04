@@ -14,25 +14,45 @@
         </div>
     }
 
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="@Url.Action("MisReservas", "Reservas")" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Volver a Mis Reservas</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Check-in en Línea</li>
-        </ol>
-    </nav>
+    <!-- Breadcrumb y Buscador de Reserva por Código -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("MisReservas", "Reservas")" class="text-decoration-none text-danger fw-bold"><i class="bi bi-chevron-left me-1"></i> Mis Reservas</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Check-in y Pase de Abordar</li>
+            </ol>
+        </nav>
+
+        @using (Html.BeginForm("Index", "CheckIn", FormMethod.Get, new { @class = "d-flex gap-2" }))
+        {
+            <input type="text" name="codigoReserva" class="form-control form-control-sm text-uppercase font-monospace" placeholder="Código Reserva (ej: RV000001)" value="@Model.CodigoReserva" style="min-width: 210px;" />
+            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold px-3">
+                Buscar Reserva
+            </button>
+        }
+    </div>
+
+    <!-- Aviso de Ventana de Check-in (Política DP-12) -->
+    @if (!string.IsNullOrWhiteSpace(Model.MensajeVentanaCheckIn))
+    {
+        <div class="alert @(Model.EstadoReservaCodigo == "CONFIRMADA" ? "alert-info" : "alert-warning") border-0 shadow-sm rounded-3 small mb-4 d-flex align-items-center gap-2">
+            <span>&#9200;</span>
+            <div>
+                <strong>Ventana de Check-in (Pol&iacute;tica DP-12):</strong> @Model.MensajeVentanaCheckIn
+            </div>
+        </div>
+    }
 
     <!-- Encabezado de Vuelo y Reserva -->
     <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden">
         <div class="card-header bg-danger text-white p-4 d-flex flex-wrap justify-content-between align-items-center" style="background-color: #E1251B !important;">
             <div>
-                <span class="badge bg-white text-danger rounded-pill px-3 py-1 fw-bold text-uppercase mb-2">Check-in Express VIP</span>
                 <h1 class="h3 fw-bold mb-1 font-monospace">Reserva @Model.CodigoReserva</h1>
-                <p class="text-white-50 mb-0 small">Obtenga sus pases de abordar de forma instantánea para su vuelo ejecutivo.</p>
+                <p class="text-white-50 mb-0 small">Obtenga sus pases de abordar con c&oacute;digo de embarque <code>BP-{CheckInId}</code> para su vuelo ejecutivo.</p>
             </div>
             <div class="mt-3 mt-md-0 text-md-end">
                 <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold font-monospace fs-6">
-                    <i class="bi bi-airplane-fill text-danger me-1"></i> @Model.CodigoVuelo
+                    <i class="bi bi-airplane-fill text-danger me-1"></i> @Model.CodigoVuelo &bull; @Model.EstadoReservaCodigo
                 </span>
             </div>
         </div>
@@ -69,14 +89,31 @@
         </div>
     </div>
 
-    @if (Model.CheckInTodosCompletado)
+    @if (Model.EstadoReservaCodigo != "CONFIRMADA")
+    {
+        <div class="card shadow-sm border-0 rounded-4 text-center p-5 mb-4">
+            <h3 class="h4 fw-bold text-dark mb-2">Reserva en estado @Model.EstadoReservaCodigo</h3>
+            <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
+                Conforme a la pol&iacute;tica <strong>DP-12</strong> y a la regla de integridad <code>trg_CheckIn_Validar</code>, el Check-in &uacute;nicamente puede registrarse sobre reservas <strong>CONFIRMADAS</strong> con pago aprobado.
+            </p>
+            @if (Model.EstadoReservaCodigo == "PENDIENTE")
+            {
+                <div>
+                    <a href="@Url.Action("Pagar", "Compras", new { reservaId = Model.ReservaId, codigoPreReserva = Model.CodigoReserva, vueloId = Model.VueloId })" class="btn btn-danger rounded-pill fw-bold px-4 py-2" style="background-color: #E1251B; border-color: #E1251B;">
+                        Pagar Reserva Ahora &rarr;
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else if (Model.CheckInTodosCompletado)
     {
         <!-- Estado: Check-in Ya Realizado -->
         <div class="card shadow-sm border-0 rounded-4 text-center p-5 mb-4">
             <div class="mb-3">
                 <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
             </div>
-            <h3 class="h4 fw-bold text-dark">¡Check-in Ya Completado!</h3>
+            <h3 class="h4 fw-bold text-dark">&iexcl;Check-in Ya Completado!</h3>
             <p class="text-muted mx-auto" style="max-width: 500px;">
                 Todos los pasajeros de esta reserva cuentan con su pase de abordar emitido y asiento asignado. Puede visualizar o imprimir sus pases directamente.
             </p>
@@ -158,19 +195,19 @@
                     <div class="card shadow-sm border-0 rounded-4 mb-4 border-warning border-opacity-50">
                         <div class="card-header bg-white py-3 px-4 border-bottom">
                             <h5 class="fw-bold text-dark mb-0">
-                                <i class="bi bi-shield-exclamation text-danger me-2"></i>2. Declaración de Seguridad y Mercancías Peligrosas
+                                <i class="bi bi-shield-exclamation text-danger me-2"></i>2. Declaraci&oacute;n de Seguridad y Mercanc&iacute;as Peligrosas
                             </h5>
                         </div>
                         <div class="card-body p-4">
                             <div class="alert alert-light border small text-muted mb-3">
                                 <i class="bi bi-info-circle-fill text-danger me-1"></i>
-                                Conforme a las regulaciones de la <strong>IATA</strong> y la <strong>Dirección General de Aviación Civil (DGAC)</strong> del Ecuador, está estrictamente prohibido transportar en equipaje de mano o bodega: explosivos, gases comprimidos, líquidos inflamables, baterías de litio defectuosas o sustancias tóxicas.
+                                Conforme a las regulaciones de la <strong>IATA</strong> y la <strong>Direcci&oacute;n General de Aviaci&oacute;n Civil (DGAC)</strong> del Ecuador, est&aacute; estrictamente prohibido transportar en equipaje de mano o bodega: explosivos, gases comprimidos, l&iacute;quidos inflamables, bater&iacute;as de litio defectuosas o sustancias t&oacute;xicas.
                             </div>
 
                             <div class="form-check">
                                 @Html.CheckBoxFor(m => m.DeclaraSeguridad, new { @class = "form-check-input", @id = "chkSeguridad" })
                                 <label class="form-check-label fw-semibold text-dark small" for="chkSeguridad">
-                                    Declaro bajo juramento que ni yo ni mis acompañantes transportamos sustancias u objetos clasificados como mercancías peligrosas o prohibidas para el transporte aéreo.
+                                    Declaro bajo juramento que ni yo ni mis acompa&ntilde;antes transportamos sustancias u objetos clasificados como mercanc&iacute;as peligrosas o prohibidas para el transporte a&eacute;reo.
                                 </label>
                             </div>
                             @Html.ValidationMessageFor(m => m.DeclaraSeguridad, "", new { @class = "text-danger small mt-1 d-block" })
@@ -185,60 +222,17 @@
                     </div>
                 </div>
 
-                <!-- Columna Derecha: Vista de la Cabina Phenom 300E -->
+                <!-- Columna Derecha: Mapa Real de la Cabina Phenom 300E -->
                 <div class="col-lg-5">
                     <div class="card shadow-sm border-0 rounded-4">
                         <div class="card-header bg-white py-3 px-4 border-bottom text-center">
                             <h6 class="fw-bold text-dark mb-0">
-                                <i class="bi bi-grid-3x3-gap-fill text-danger me-2"></i>Distribución de Asientos Phenom 300E
+                                <i class="bi bi-grid-3x3-gap-fill text-danger me-2"></i>Ubicaci&oacute;n en Cabina Embraer Phenom 300E
                             </h6>
                             <small class="text-muted">Capacidad exclusiva: 7 Asientos Ejecutivos</small>
                         </div>
-                        <div class="card-body p-4 text-center">
-                            <!-- Diagrama estilizado de la cabina -->
-                            <div class="p-3 bg-light rounded-4 border mx-auto" style="max-width: 320px;">
-                                <div class="text-muted small fw-bold text-uppercase mb-3">
-                                    <i class="bi bi-arrow-up text-danger me-1"></i> Cabina de Mando (Pilotos)
-                                </div>
-
-                                <div class="mb-3 p-2 bg-white rounded-3 border">
-                                    <span class="badge bg-secondary-subtle text-secondary small">Fila 1 (Lado Derecho)</span>
-                                    <div class="mt-2">
-                                        <span class="badge bg-danger text-white p-2 font-monospace fw-bold fs-6">1D</span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3 p-2 bg-white rounded-3 border">
-                                    <span class="badge bg-secondary-subtle text-secondary small">Fila 2 (Club Seating)</span>
-                                    <div class="d-flex justify-content-around mt-2">
-                                        <span class="badge bg-danger text-white p-2 font-monospace fw-bold fs-6">2I</span>
-                                        <span class="text-muted small align-self-center">Pasillo</span>
-                                        <span class="badge bg-danger text-white p-2 font-monospace fw-bold fs-6">2D</span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3 p-2 bg-white rounded-3 border">
-                                    <span class="badge bg-secondary-subtle text-secondary small">Fila 3 (Club Seating)</span>
-                                    <div class="d-flex justify-content-around mt-2">
-                                        <span class="badge bg-danger text-white p-2 font-monospace fw-bold fs-6">3I</span>
-                                        <span class="text-muted small align-self-center">Pasillo</span>
-                                        <span class="badge bg-danger text-white p-2 font-monospace fw-bold fs-6">3D</span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-2 p-2 bg-white rounded-3 border">
-                                    <span class="badge bg-secondary-subtle text-secondary small">Fila 4 (Popa Ejecutiva)</span>
-                                    <div class="d-flex justify-content-around mt-2">
-                                        <span class="badge bg-danger text-white p-2 font-monospace fw-bold fs-6">4I</span>
-                                        <span class="text-muted small align-self-center">Pasillo</span>
-                                        <span class="badge bg-danger text-white p-2 font-monospace fw-bold fs-6">4D</span>
-                                    </div>
-                                </div>
-
-                                <div class="text-muted small fw-bold text-uppercase mt-3">
-                                    <i class="bi bi-arrow-down text-muted me-1"></i> Lavatorio / Galley VIP
-                                </div>
-                            </div>
+                        <div class="card-body p-3">
+                            @Html.Partial("_MapaAsientos", Model.MapaCabina)
                         </div>
                     </div>
                 </div>
