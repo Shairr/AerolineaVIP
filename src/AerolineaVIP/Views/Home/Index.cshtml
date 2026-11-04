@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AerolineaVIP.Models.Ruta>
+@model IEnumerable<AerolineaVIP.Models.Ruta>
 @{
     ViewBag.Title = "Vuelos Privados Ejecutivos";
     var aeropuertos = ViewBag.Aeropuertos as List<AerolineaVIP.Models.Aeropuerto> ?? new List<AerolineaVIP.Models.Aeropuerto>();
@@ -7,14 +7,11 @@
 }
 
 <!-- ==========================================================================
-     HERO SECTION CORPORATIVO — PANTALLA 1 (Requisito 1 de PLAN.md)
+     HERO SECTION CORPORATIVO
      ========================================================================== -->
 <section class="hero-avianca py-5 mb-5">
     <div class="row align-items-center gy-4">
         <div class="col-lg-7">
-            <span class="badge-role badge-role-cliente mb-3">
-                &#9992; Vuelos Ejecutivos Privados
-            </span>
             <h1 class="display-5 fw-bold mb-3 text-dark">
                 Vuela a tu pr&oacute;ximo destino
                 <span class="text-danger d-block">Viajes privados con atenci&oacute;n personalizada</span>

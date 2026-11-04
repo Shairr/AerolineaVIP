@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using Microsoft.AspNet.Identity;
@@ -22,7 +21,7 @@ namespace AerolineaVIP.Controllers
         {
         }
 
-        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
+        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager)
         {
             UserManager = userManager;
             SignInManager = signInManager;
@@ -34,9 +33,9 @@ namespace AerolineaVIP.Controllers
             {
                 return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
-            private set 
-            { 
-                _signInManager = value; 
+            private set
+            {
+                _signInManager = value;
             }
         }
 
@@ -74,17 +73,15 @@ namespace AerolineaVIP.Controllers
             }
 
             // 1. Determinar el UserName de forma sincrónica:
-            // Si escribió un correo (ej. admin@aerolineavip.com), buscamos el usuario asociado
             var usuarioPorEmail = UserManager.FindByEmail(model.Email);
             string nombreUsuarioFinal = usuarioPorEmail != null ? usuarioPorEmail.UserName : model.Email;
 
-            // 2. Intentar iniciar sesión sincrónicamente con el nombre de usuario
+            // 2. Iniciar sesión sincrónicamente con el nombre de usuario
             var result = SignInManager.PasswordSignIn(nombreUsuarioFinal, model.Password, model.RememberMe, shouldLockout: false);
 
             switch (result)
             {
                 case SignInStatus.Success:
-                    // Si intentaba ingresar a una ruta protegida con ReturnUrl, lo redirigimos allí
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     {
                         return Redirect(returnUrl);
@@ -96,11 +93,14 @@ namespace AerolineaVIP.Controllers
 
                     if (roles.Contains("Administrador") || roles.Contains("SuperUsuario"))
                     {
-                        // Redirige al Panel de Administración (Pantalla 17)
                         return RedirectToAction("Index", "Admin");
                     }
 
-                    // Clientes o usuarios estándar van al inicio
+                    if (roles.Contains("Counter"))
+                    {
+                        return RedirectToAction("Index", "Counter");
+                    }
+
                     return RedirectToAction("Index", "Home");
 
                 case SignInStatus.LockedOut:
@@ -119,10 +119,9 @@ namespace AerolineaVIP.Controllers
         //
         // GET: /Account/VerifyCode
         [AllowAnonymous]
-        public async Task<ActionResult> VerifyCode(string provider, string returnUrl, bool rememberMe)
+        public ActionResult VerifyCode(string provider, string returnUrl, bool rememberMe)
         {
-            // Require that the user has already logged in via username/password or external login
-            if (!await SignInManager.HasBeenVerifiedAsync())
+            if (!SignInManager.HasBeenVerified())
             {
                 return View("Error");
             }
@@ -134,18 +133,14 @@ namespace AerolineaVIP.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> VerifyCode(VerifyCodeViewModel model)
+        public ActionResult VerifyCode(VerifyCodeViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            // The following code protects for brute force attacks against the two factor codes. 
-            // If a user enters incorrect codes for a specified amount of time then the user account 
-            // will be locked out for a specified amount of time. 
-            // You can configure the account lockout settings in IdentityConfig
-            var result = await SignInManager.TwoFactorSignInAsync(model.Provider, model.Code, isPersistent:  model.RememberMe, rememberBrowser: model.RememberBrowser);
+            var result = SignInManager.TwoFactorSignIn(model.Provider, model.Code, isPersistent: model.RememberMe, rememberBrowser: model.RememberBrowser);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -154,7 +149,7 @@ namespace AerolineaVIP.Controllers
                     return View("Lockout");
                 case SignInStatus.Failure:
                 default:
-                    ModelState.AddModelError("", "Invalid code.");
+                    ModelState.AddModelError("", "Código inválido.");
                     return View(model);
             }
         }
@@ -167,36 +162,26 @@ namespace AerolineaVIP.Controllers
             return View();
         }
 
-        // POST: /Account/Register
+        // POST: /Account/Register (100% Sincrónico)
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Register(RegisterViewModel model)
+        public ActionResult Register(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                var result = await UserManager.CreateAsync(user, model.Password);
+                string nombreUsuario = string.IsNullOrWhiteSpace(model.UserName) ? model.Email : model.UserName.Trim();
+                var user = new ApplicationUser { UserName = nombreUsuario, Email = model.Email, EmailConfirmed = true };
+                var result = UserManager.Create(user, model.Password);
                 if (result.Succeeded)
                 {
-
-                    // REGLA DE SEGURIDAD ESTRICTA:
+                    // REGLA DE SEGURIDAD ESTRICTA (RN-02):
                     // Todo visitante público registrado desde la web recibe siempre el rol Cliente.
                     string rolAsignado = "Cliente";
 
-                    if (User.Identity.IsAuthenticated && User.IsInRole("SuperUsuario"))
-                    {
-                        // Si en el futuro un SuperUsuario usa la interfaz para registrar usuarios
-                        // rolAsignado = model.SelectedRole ?? "Cliente";
-                    }
+                    UserManager.AddToRole(user.Id, rolAsignado);
+                    SignInManager.SignIn(user, isPersistent: false, rememberBrowser: false);
 
-                    // Asignar el rol al nuevo usuario en la base de datos
-                    await UserManager.AddToRoleAsync(user.Id, rolAsignado);
-
-                    // Iniciar sesión automáticamente tras el registro
-                    await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-
-                    // Redirigir a la página principal
                     return RedirectToAction("Index", "Home");
                 }
                 AddErrors(result);
@@ -208,13 +193,13 @@ namespace AerolineaVIP.Controllers
         //
         // GET: /Account/ConfirmEmail
         [AllowAnonymous]
-        public async Task<ActionResult> ConfirmEmail(string userId, string code)
+        public ActionResult ConfirmEmail(string userId, string code)
         {
             if (userId == null || code == null)
             {
                 return View("Error");
             }
-            var result = await UserManager.ConfirmEmailAsync(userId, code);
+            var result = UserManager.ConfirmEmail(userId, code);
             return View(result.Succeeded ? "ConfirmEmail" : "Error");
         }
 
@@ -231,26 +216,19 @@ namespace AerolineaVIP.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        public ActionResult ForgotPassword(ForgotPasswordViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var user = await UserManager.FindByNameAsync(model.Email);
-                if (user == null || !(await UserManager.IsEmailConfirmedAsync(user.Id)))
+                var user = UserManager.FindByEmail(model.Email) ?? UserManager.FindByName(model.Email);
+                if (user == null)
                 {
-                    // Don't reveal that the user does not exist or is not confirmed
                     return View("ForgotPasswordConfirmation");
                 }
 
-                // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
-                // Send an email with this link
-                // string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
-                // var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);		
-                // await UserManager.SendEmailAsync(user.Id, "Reset Password", "Please reset your password by clicking <a href=\"" + callbackUrl + "\">here</a>");
-                // return RedirectToAction("ForgotPasswordConfirmation", "Account");
+                return View("ForgotPasswordConfirmation");
             }
 
-            // If we got this far, something failed, redisplay form
             return View(model);
         }
 
@@ -275,19 +253,18 @@ namespace AerolineaVIP.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> ResetPassword(ResetPasswordViewModel model)
+        public ActionResult ResetPassword(ResetPasswordViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
-            var user = await UserManager.FindByNameAsync(model.Email);
+            var user = UserManager.FindByName(model.Email);
             if (user == null)
             {
-                // Don't reveal that the user does not exist
                 return RedirectToAction("ResetPasswordConfirmation", "Account");
             }
-            var result = await UserManager.ResetPasswordAsync(user.Id, model.Code, model.Password);
+            var result = UserManager.ResetPassword(user.Id, model.Code, model.Password);
             if (result.Succeeded)
             {
                 return RedirectToAction("ResetPasswordConfirmation", "Account");
@@ -311,21 +288,20 @@ namespace AerolineaVIP.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult ExternalLogin(string provider, string returnUrl)
         {
-            // Request a redirect to the external login provider
             return new ChallengeResult(provider, Url.Action("ExternalLoginCallback", "Account", new { ReturnUrl = returnUrl }));
         }
 
         //
         // GET: /Account/SendCode
         [AllowAnonymous]
-        public async Task<ActionResult> SendCode(string returnUrl, bool rememberMe)
+        public ActionResult SendCode(string returnUrl, bool rememberMe)
         {
-            var userId = await SignInManager.GetVerifiedUserIdAsync();
+            var userId = SignInManager.GetVerifiedUserId();
             if (userId == null)
             {
                 return View("Error");
             }
-            var userFactors = await UserManager.GetValidTwoFactorProvidersAsync(userId);
+            var userFactors = UserManager.GetValidTwoFactorProviders(userId);
             var factorOptions = userFactors.Select(purpose => new SelectListItem { Text = purpose, Value = purpose }).ToList();
             return View(new SendCodeViewModel { Providers = factorOptions, ReturnUrl = returnUrl, RememberMe = rememberMe });
         }
@@ -335,15 +311,14 @@ namespace AerolineaVIP.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> SendCode(SendCodeViewModel model)
+        public ActionResult SendCode(SendCodeViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View();
             }
 
-            // Generate the token and send it
-            if (!await SignInManager.SendTwoFactorCodeAsync(model.SelectedProvider))
+            if (!SignInManager.SendTwoFactorCode(model.SelectedProvider))
             {
                 return View("Error");
             }
@@ -353,16 +328,15 @@ namespace AerolineaVIP.Controllers
         //
         // GET: /Account/ExternalLoginCallback
         [AllowAnonymous]
-        public async Task<ActionResult> ExternalLoginCallback(string returnUrl)
+        public ActionResult ExternalLoginCallback(string returnUrl)
         {
-            var loginInfo = await AuthenticationManager.GetExternalLoginInfoAsync();
+            var loginInfo = AuthenticationManager.GetExternalLoginInfo();
             if (loginInfo == null)
             {
                 return RedirectToAction("Login");
             }
 
-            // Sign in the user with this external login provider if the user already has a login
-            var result = await SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
+            var result = SignInManager.ExternalSignIn(loginInfo, isPersistent: false);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -373,7 +347,6 @@ namespace AerolineaVIP.Controllers
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = false });
                 case SignInStatus.Failure:
                 default:
-                    // If the user does not have an account, then prompt the user to create an account
                     ViewBag.ReturnUrl = returnUrl;
                     ViewBag.LoginProvider = loginInfo.Login.LoginProvider;
                     return View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel { Email = loginInfo.Email });
@@ -385,7 +358,7 @@ namespace AerolineaVIP.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> ExternalLoginConfirmation(ExternalLoginConfirmationViewModel model, string returnUrl)
+        public ActionResult ExternalLoginConfirmation(ExternalLoginConfirmationViewModel model, string returnUrl)
         {
             if (User.Identity.IsAuthenticated)
             {
@@ -394,20 +367,19 @@ namespace AerolineaVIP.Controllers
 
             if (ModelState.IsValid)
             {
-                // Get the information about the user from the external login provider
-                var info = await AuthenticationManager.GetExternalLoginInfoAsync();
+                var info = AuthenticationManager.GetExternalLoginInfo();
                 if (info == null)
                 {
                     return View("ExternalLoginFailure");
                 }
                 var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                var result = await UserManager.CreateAsync(user);
+                var result = UserManager.Create(user);
                 if (result.Succeeded)
                 {
-                    result = await UserManager.AddLoginAsync(user.Id, info.Login);
+                    result = UserManager.AddLogin(user.Id, info.Login);
                     if (result.Succeeded)
                     {
-                        await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                        SignInManager.SignIn(user, isPersistent: false, rememberBrowser: false);
                         return RedirectToLocal(returnUrl);
                     }
                 }
@@ -457,7 +429,6 @@ namespace AerolineaVIP.Controllers
         }
 
         #region Helpers
-        // Used for XSRF protection when adding external logins
         private const string XsrfKey = "XsrfId";
 
         private IAuthenticationManager AuthenticationManager

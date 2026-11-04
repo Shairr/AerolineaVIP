@@ -8,25 +8,26 @@
     <!-- Stepper de Progreso (Paso 3 Activo) -->
     @Html.Partial("_PasosReserva", 3)
 
-    <!-- Encabezado de la Pantalla 10 -->
+    <!-- Encabezado -->
     <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-2">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 10</span>
-                <span class="badge bg-dark rounded-pill px-3 py-1">Paso 3 de 4</span>
-                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">Pre-Reserva Generada</span>
-            </div>
             <h1 class="h2 fw-bold text-dark mb-0">
                 Resumen y Confirmaci&oacute;n de Reserva
             </h1>
             <p class="text-secondary small mb-0">
-                Por favor revise cuidadosamente los datos del itinerario, asignaci&oacute;n de asientos y liquidaci&oacute;n fiscal antes de proceder al pago.
+                Su reserva ha sido registrada con retenci&oacute;n de asientos por <strong>@Model.MinutosRetencion minutos</strong>. Puede pagar ahora o conservarla pendiente en <em>Mis Reservas</em>.
             </p>
         </div>
 
         <div class="text-end">
-            <span class="small text-muted d-block">C&oacute;digo Pre-Reserva Temporal:</span>
-            <span class="badge bg-dark fs-6 px-3 py-2 text-uppercase">@Model.CodigoPreReserva</span>
+            <span class="small text-muted d-block">C&oacute;digo Oficial de Reserva:</span>
+            <span class="badge bg-dark fs-5 px-3 py-2 text-uppercase font-monospace">@Model.CodigoPreReserva</span>
+            @if (Model.FechaExpiracion.HasValue)
+            {
+                <span class="small text-danger fw-semibold d-block mt-1">
+                    &#9200; Retenci&oacute;n hasta: @Model.FechaExpiracion.Value.ToString("HH:mm") hrs
+                </span>
+            }
         </div>
     </div>
 
@@ -98,8 +99,8 @@
                                     </td>
                                     <td>@p.TipoDocumento: @p.NumeroDocumento</td>
                                     <td>
-                                        <span class="badge bg-danger rounded-pill px-2 py-1 fs-6">
-                                            &#128186; @p.AsientoAsignado
+                                        <span class="badge rounded-pill px-2 py-1 fs-6 text-white" style="background-color: #6F42C1;">
+                                            &#128186; @p.AsientoAsignado (Reservado)
                                         </span>
                                     </td>
                                     <td>
@@ -114,12 +115,12 @@
             </div>
         </div>
 
-        <!-- Columna Derecha: Liquidación Fiscal y Botón de Pago -->
+        <!-- Columna Derecha: Liquidación Fiscal y Botones de Acción -->
         <div class="col-lg-5">
             <div class="resumen-vuelo-sticky">
                 <div class="card card-avianca p-4 shadow-2 border">
                     <h4 class="h5 fw-bold border-bottom pb-2 mb-3 text-dark">
-                        Liquidaci&oacute;n Fiscal de la Reserva
+                        Liquidaci&oacute;n de la Reserva
                     </h4>
 
                     <div class="table-responsive mb-3">
@@ -151,22 +152,17 @@
                         </table>
                     </div>
 
-                    <div class="alert alert-light border small text-muted p-2 rounded-2 mb-3">
-                        &#128179; <strong>Moneda:</strong> D&oacute;lares de los Estados Unidos de Am&eacute;rica (USD). La transacci&oacute;n se procesar&aacute; a trav&eacute;s de pasarela de pago seguro en el Paso 4.
-                    </div>
-
-                    <!-- Botón de Pago -->
-                    <a href="@Url.Action("Pagar", "Reservas", new { codigoPreReserva = Model.CodigoPreReserva, vueloId = Model.VueloId, tarifa = Model.TarifaSeleccionada })" 
-                       class="btn btn-avianca-primary w-100 py-3 fw-bold fs-6">
-                        Proceder al Pago Seguro (Paso 4) &rarr;
+                    <!-- Botón Principal: Pagar Ahora -->
+                    <a href="@Url.Action("Pagar", "Compras", new { reservaId = Model.ReservaId, codigoPreReserva = Model.CodigoPreReserva, vueloId = Model.VueloId, tarifa = Model.TarifaSeleccionada })" 
+                       class="btn btn-avianca-primary w-100 py-3 fw-bold fs-6 mb-2">
+                        Proceder al Pago Simulado (Paso 4) &rarr;
                     </a>
 
-                    <div class="text-center mt-3">
-                        <a href="@Url.Action("Pasajeros", "Reservas", new { vueloId = Model.VueloId, asientos = Model.AsientosCodigos, tarifa = Model.TarifaSeleccionada })" 
-                           class="small text-secondary text-decoration-none">
-                            &larr; Volver y modificar pasajeros
-                        </a>
-                    </div>
+                    <!-- Botón Secundario: Guardar Reserva Pendiente y pagar luego -->
+                    <a href="@Url.Action("MisReservas", "Reservas", new { tab = "pendientes" })" 
+                       class="btn btn-outline-dark w-100 py-2 fw-semibold small">
+                        &#128190; Conservar como Pendiente y Pagar Luego en Mis Reservas
+                    </a>
                 </div>
             </div>
         </div>

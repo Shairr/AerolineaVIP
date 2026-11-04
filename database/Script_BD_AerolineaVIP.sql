@@ -1,4 +1,4 @@
-/* =====================================================================================
+﻿/* =====================================================================================
    PROYECTO      : Sistema web de compra y reserva de pasajes - Aerolínea VIP
    ARCHIVO       : Script_BD_AerolineaVIP.sql
    MOTOR         : Microsoft SQL Server 2016 o superior
@@ -955,8 +955,8 @@ INSERT INTO dbo.MarcaTarjeta (Codigo, Nombre, LongitudNumero, LongitudCodigoSegu
  ('DINERS',     N'Diners Club',      14, 3, '36, 38, 300-305',  '~/Content/img/tarjetas/diners.svg');
 
 INSERT INTO dbo.DatosEmisor (DatosEmisorId, NombreComercial, Identificacion, Direccion, Telefono, Correo, LeyendaComprobante)
-VALUES (1, N'Aerolínea VIP (proyecto académico)', N'PENDIENTE DE DEFINICIÓN (DP-05)', N'PENDIENTE DE DEFINICIÓN',
-        NULL, NULL,
+VALUES (1, N'AEROLINEA VIP S.A. - PROYECTO ACADEMICO DIT', N'1799999999001', N'Aeropuerto Internacional Mariscal Sucre, Tababela - Quito, Ecuador',
+        '(02) 399-0000', 'facturacion@aerolineavip.ec',
         N'Comprobante académico de una operación simulada. No constituye factura tributaria ni documento autorizado.');
 
 -- Aeropuertos (Galápagos: supuesto pendiente DP-01)
@@ -964,7 +964,7 @@ INSERT INTO dbo.Aeropuerto (CodigoIATA, Nombre, Localidad) VALUES
  ('UIO', N'Aeropuerto Internacional Mariscal Sucre',          N'Quito'),
  ('GYE', N'Aeropuerto Internacional José Joaquín de Olmedo', N'Guayaquil'),
  ('MEC', N'Aeropuerto Internacional Eloy Alfaro',            N'Manta'),
- ('GPS', N'Aeropuerto Ecológico Seymour (supuesto DP-01)',   N'Galápagos');
+ ('GPS', N'Aeropuerto Ecológico Galápagos Seymour',          N'Isla Baltra - Galápagos');
 
 -- Rutas con tarifa de EJEMPLO (DP-04): 650 USD en tramos con Galápagos, 450 USD en los demás.
 INSERT INTO dbo.Ruta (AeropuertoOrigenId, AeropuertoDestinoId, TarifaReferencial)

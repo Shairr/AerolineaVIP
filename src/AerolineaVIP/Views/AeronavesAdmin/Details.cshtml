@@ -1,43 +1,68 @@
-﻿@model AerolineaVIP.Models.Aeronave
-
+@model AerolineaVIP.Models.Aeronave
 @{
-    ViewBag.Title = "Details";
+    ViewBag.Title = "Detalles de Aeronave " + Model.Matricula;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Details</h2>
+<div class="container my-4">
+    <div class="card card-avianca p-4 shadow-1 border mx-auto" style="max-width: 800px;">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold text-dark mb-0">Aeronave @Model.Matricula</h2>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="@Url.Action("Edit", new { id = Model.AeronaveId })" class="btn btn-avianca-primary-sm rounded-pill px-3">Editar</a>
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">&larr; Volver</a>
+            </div>
+        </div>
 
-<div>
-    <h4>Aeronave</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.Matricula)
-        </dt>
+        <div class="row g-3 small mb-4">
+            <div class="col-md-4">
+                <span class="text-muted d-block">Matr&iacute;cula:</span>
+                <strong class="fs-5 font-monospace text-dark">@Model.Matricula</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted d-block">Modelo y Capacidad:</span>
+                <strong class="text-dark">@(Model.ModeloAeronave?.Fabricante) @(Model.ModeloAeronave?.Nombre) (7 asientos)</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted d-block">Estado Operativo:</span>
+                <span class="badge @(Model.EstadoAeronaveCodigo == "DISPONIBLE" ? "bg-success" : "bg-danger")">@Model.EstadoAeronaveCodigo</span>
+            </div>
+        </div>
 
-        <dd>
-            @Html.DisplayFor(model => model.Matricula)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.EstadoAeronave.Descripcion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.EstadoAeronave.Descripcion)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.ModeloAeronave.Fabricante)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.ModeloAeronave.Fabricante)
-        </dd>
-
-    </dl>
+        <h5 class="h6 fw-bold text-dark border-bottom pb-2 mb-3">Vuelos Programados / Operados por @Model.Matricula (@(Model.Vueloes?.Count ?? 0))</h5>
+        @if (Model.Vueloes != null && Model.Vueloes.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Vuelo</th>
+                            <th>Fecha</th>
+                            <th>Ruta</th>
+                            <th>Horario</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in Model.Vueloes.OrderBy(x => x.FechaOperacion).Take(25))
+                        {
+                            <tr>
+                                <td class="font-monospace fw-bold">VIP@(v.VueloId.ToString("D5"))</td>
+                                <td>@v.FechaOperacion.ToString("dd/MM/yyyy")</td>
+                                <td>@(v.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA) &rarr; @(v.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA)</td>
+                                <td>@(v.Frecuencia?.HoraSalida.ToString(@"hh\:mm")) - @(v.Frecuencia?.HoraLlegada.ToString(@"hh\:mm"))</td>
+                                <td><span class="badge bg-secondary">@v.EstadoVueloCodigo</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="small text-muted mb-0">Esta aeronave no tiene vuelos asignados todav&iacute;a.</p>
+        }
+    </div>
 </div>
-<p>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.AeronaveId }) |
-    @Html.ActionLink("Back to List", "Index")
-</p>

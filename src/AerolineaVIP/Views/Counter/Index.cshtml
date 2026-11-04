@@ -1,6 +1,6 @@
-﻿@model List<AerolineaVIP.Models.Reserva>
+@model List<AerolineaVIP.Models.Reserva>
 @{
-    ViewBag.Title = "Asistencia y Mostrador de Counter";
+    ViewBag.Title = "Asistencia y Mostrador de Counter (MOD-09)";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var vuelos = ViewBag.Vuelos as List<AerolineaVIP.Models.Vuelo> ?? new List<AerolineaVIP.Models.Vuelo>();
     string busqueda = ViewBag.Busqueda as string;
@@ -29,23 +29,28 @@
     <!-- Encabezado de Counter -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 border-bottom pb-3">
         <div>
-            <span class="badge bg-warning text-dark fw-bold px-3 py-1 rounded-pill mb-1">MÓDULO MOD-09 · ATENCIÓN EN COUNTER</span>
             <h1 class="h3 fw-bold text-dark mb-0">Central de Asistencia y Mostrador VIP</h1>
-            <p class="text-muted small mb-0">Consulta autorizada de reservas, verificación de pasajeros y check-in presencial</p>
+            <p class="text-muted small mb-0">Consulta autorizada de reservas, cambio de asiento, cobro de reservas pendientes, check-in presencial y pases de abordar.</p>
         </div>
-        <div class="text-end">
-            <span class="small text-muted d-block">Operador Actual:</span>
-            <span class="badge bg-dark px-3 py-2">@User.Identity.Name</span>
+        <div class="d-flex align-items-center gap-2">
+            <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-avianca-primary-sm">
+                &#9992; Crear Reserva en Mostrador
+            </a>
+            <div class="text-end ms-2">
+                <span class="small text-muted d-block">Operador Actual:</span>
+                <span class="badge bg-dark px-3 py-2">@User.Identity.Name</span>
+            </div>
         </div>
     </div>
 
     <!-- Buscador Rápido de Reservas y Pasajeros -->
     <div class="card card-avianca p-4 shadow-1 mb-4">
-        <h4 class="h6 fw-bold text-dark mb-3">Buscar Reserva o Pasajero</h4>
+        <h4 class="h6 fw-bold text-dark mb-3">Buscar Reserva o Pasajero (C&oacute;digo, C&eacute;dula/Pasaporte o Apellido)</h4>
         @using (Html.BeginForm("Index", "Counter", FormMethod.Get, new { @class = "row g-3" }))
         {
+            <input type="hidden" name="fecha" value="@fecha" />
             <div class="col-12 col-md-8">
-                <input type="text" name="busqueda" value="@busqueda" class="form-control" placeholder="Ingrese Código de Reserva (ej. VIP-12345), Cédula o Apellido..." />
+                <input type="text" name="busqueda" value="@busqueda" class="form-control" placeholder="Ingrese Código de Reserva (ej: RV000001), Cédula (ej: 1710034065) o Apellido..." />
             </div>
             <div class="col-12 col-md-4 d-flex gap-2">
                 <button type="submit" class="btn btn-avianca-primary flex-grow-1">
@@ -53,116 +58,176 @@
                 </button>
                 @if (!string.IsNullOrEmpty(busqueda))
                 {
-                    <a href="@Url.Action("Index", "Counter")" class="btn btn-outline-secondary">Limpiar</a>
+                    <a href="@Url.Action("Index", "Counter", new { fecha = fecha })" class="btn btn-outline-secondary">Ver Recientes</a>
                 }
             </div>
         }
     </div>
 
-    <!-- Resultados de Búsqueda de Reservas -->
-    @if (!string.IsNullOrWhiteSpace(busqueda))
-    {
-        <div class="card card-avianca p-4 shadow-1 mb-4">
-            <h4 class="h5 fw-bold text-dark mb-3">Reservas Encontradas (@Model.Count)</h4>
-            @if (!Model.Any())
-            {
-                <div class="alert alert-info small mb-0">
-                    No se encontraron reservas que coincidan con el término "<strong>@busqueda</strong>".
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light small">
+    <!-- Tabla de Reservas para Atención en Mostrador -->
+    <div class="card card-avianca p-4 shadow-1 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="h5 fw-bold text-dark mb-0">
+                @(string.IsNullOrWhiteSpace(busqueda) ? "Reservas Recientes en el Sistema" : $"Resultados para \"{busqueda}\"") (@Model.Count)
+            </h4>
+            <span class="small text-muted">Mostrador autorizado para gesti&oacute;n operativa</span>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info small mb-0">
+                No se encontraron reservas que coincidan con el criterio ingresado.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>C&oacute;digo</th>
+                            <th>Creaci&oacute;n</th>
+                            <th>Pasajeros / Asiento Phenom 300E</th>
+                            <th>Ruta y Vuelo</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones de Counter</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            var primerVuelo = r.ReservaPasajeroVueloes.FirstOrDefault()?.Vuelo;
+                            bool tieneAlgunCheckIn = r.ReservaPasajeroVueloes.Any(a => a.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"));
+
                             <tr>
-                                <th>Código</th>
-                                <th>Fecha</th>
-                                <th>Pasajeros / Asiento</th>
-                                <th>Ruta</th>
-                                <th>Estado</th>
-                                <th class="text-end">Acción de Counter</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var r in Model)
-                            {
-                                <tr>
-                                    <td class="fw-bold font-monospace text-danger">@r.CodigoReserva</td>
-                                    <td class="small">@r.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td>
-                                        @foreach (var asignacion in r.ReservaPasajeroVueloes)
-                                        {
-                                            <div class="small mb-1">
-                                                <strong>@(asignacion.Pasajero?.Nombres) @(asignacion.Pasajero?.Apellidos)</strong>
-                                                <span class="badge bg-light text-dark border ms-1">Asiento @asignacion.NumeroAsiento</span>
-                                                <span class="text-muted font-monospace">(@asignacion.Pasajero?.NumeroDocumento)</span>
-                                                @if (asignacion.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
-                                                {
-                                                    <span class="badge bg-success ms-1">Check-in OK</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-secondary ms-1">Pendiente</span>
-                                                }
-                                            </div>
-                                        }
-                                    </td>
-                                    <td class="small">
-                                        @{
-                                            var primerVuelo = r.ReservaPasajeroVueloes.FirstOrDefault()?.Vuelo;
-                                        }
-                                        @(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA) &rarr; @(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA)
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-@(r.EstadoReservaCodigo == "CONFIRMADA" ? "success" : "warning")">
-                                            @r.EstadoReservaCodigo
-                                        </span>
-                                    </td>
-                                    <td class="text-end">
-                                        @foreach (var asignacion in r.ReservaPasajeroVueloes)
-                                        {
-                                            if (!asignacion.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
+                                <td class="fw-bold font-monospace text-danger fs-6">@r.CodigoReserva</td>
+                                <td class="small">@r.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @foreach (var asignacion in r.ReservaPasajeroVueloes.Where(a => a.EstadoAsignacionCodigo != "CANCELADA"))
+                                    {
+                                        string codSeat = AerolineaVIP.Controllers.VuelosController.MapearNumeroAsientoACodigo(asignacion.NumeroAsiento);
+                                        bool checkInOk = asignacion.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO");
+
+                                        <div class="small mb-2 d-flex flex-wrap align-items-center gap-2">
+                                            <strong>@(asignacion.Pasajero?.Nombres) @(asignacion.Pasajero?.Apellidos)</strong>
+                                            <span class="text-muted font-monospace">(@(asignacion.Pasajero?.NumeroDocumento))</span>
+                                            <span class="badge bg-danger text-white">Asiento @codSeat (#@asignacion.NumeroAsiento)</span>
+
+                                            @if (checkInOk)
                                             {
-                                                using (Html.BeginForm("AsistirCheckIn", "Counter", FormMethod.Post, new { @class = "d-inline-block my-1" }))
+                                                <span class="badge bg-success">Check-in OK</span>
+                                            }
+                                            else if (r.EstadoReservaCodigo != "CANCELADA" && r.EstadoReservaCodigo != "EXPIRADA")
+                                            {
+                                                <!-- Selector rápido de cambio de asiento en Counter -->
+                                                using (Html.BeginForm("CambiarAsiento", "Counter", FormMethod.Post, new { @class = "d-inline-flex align-items-center gap-1" }))
                                                 {
                                                     @Html.AntiForgeryToken()
-                                                    @Html.Hidden("reservaId", r.ReservaId)
-                                                    @Html.Hidden("pasajeroId", asignacion.PasajeroId)
-                                                    @Html.Hidden("vueloId", asignacion.VueloId)
-                                                    <button type="submit" class="btn btn-sm btn-outline-success">
-                                                        Asistir Check-in (Asiento @asignacion.NumeroAsiento)
+                                                    @Html.Hidden("asignacionId", asignacion.AsignacionId)
+                                                    @Html.Hidden("busquedaRetorno", r.CodigoReserva)
+                                                    <select name="nuevoAsiento" class="form-select form-select-sm py-0 px-1" style="width: 72px; font-size: 11px;" title="Reasignar asiento">
+                                                        <option value="1" @(asignacion.NumeroAsiento == 1 ? "selected" : "")>1D</option>
+                                                        <option value="2" @(asignacion.NumeroAsiento == 2 ? "selected" : "")>2D</option>
+                                                        <option value="3" @(asignacion.NumeroAsiento == 3 ? "selected" : "")>2I</option>
+                                                        <option value="4" @(asignacion.NumeroAsiento == 4 ? "selected" : "")>3D</option>
+                                                        <option value="5" @(asignacion.NumeroAsiento == 5 ? "selected" : "")>3I</option>
+                                                        <option value="6" @(asignacion.NumeroAsiento == 6 ? "selected" : "")>4D</option>
+                                                        <option value="7" @(asignacion.NumeroAsiento == 7 ? "selected" : "")>4I</option>
+                                                    </select>
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 11px;">
+                                                        Cambiar
                                                     </button>
                                                 }
                                             }
+                                        </div>
+                                    }
+                                </td>
+                                <td class="small">
+                                    <div class="fw-bold">@(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto?.CodigoIATA ?? "UIO") &rarr; @(primerVuelo?.Frecuencia?.Ruta?.Aeropuerto1?.CodigoIATA ?? "GYE")</div>
+                                    <div class="text-muted">VIP@((primerVuelo?.VueloId ?? 1).ToString("D5")) &bull; @(primerVuelo?.FechaOperacion.ToString("dd/MM/yyyy"))</div>
+                                </td>
+                                <td>
+                                    @if (r.EstadoReservaCodigo == "CONFIRMADA")
+                                    {
+                                        <span class="badge bg-success">CONFIRMADA</span>
+                                    }
+                                    else if (r.EstadoReservaCodigo == "PENDIENTE")
+                                    {
+                                        <span class="badge text-white" style="background-color: #6F42C1;">PENDIENTE PAGO</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@r.EstadoReservaCodigo</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex flex-wrap justify-content-end gap-1">
+                                        @if (r.EstadoReservaCodigo == "PENDIENTE")
+                                        {
+                                            <a href="@Url.Action("Pagar", "Compras", new { reservaId = r.ReservaId, codigoPreReserva = r.CodigoReserva })" class="btn btn-sm btn-danger">
+                                                Cobrar Pago
+                                            </a>
                                         }
-                                        <a href="@Url.Action("Comprobante", "Reservas", new { id = r.ReservaId })" class="btn btn-sm btn-outline-dark" target="_blank">
-                                            Ver Comprobante
+                                        else if (r.EstadoReservaCodigo == "CONFIRMADA")
+                                        {
+                                            foreach (var asignacion in r.ReservaPasajeroVueloes.Where(a => a.EstadoAsignacionCodigo == "CONFIRMADA"))
+                                            {
+                                                if (!asignacion.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
+                                                {
+                                                    string codSeat = AerolineaVIP.Controllers.VuelosController.MapearNumeroAsientoACodigo(asignacion.NumeroAsiento);
+                                                    using (Html.BeginForm("AsistirCheckIn", "Counter", FormMethod.Post, new { @class = "d-inline-block" }))
+                                                    {
+                                                        @Html.AntiForgeryToken()
+                                                        @Html.Hidden("reservaId", r.ReservaId)
+                                                        @Html.Hidden("pasajeroId", asignacion.PasajeroId)
+                                                        @Html.Hidden("vueloId", asignacion.VueloId)
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            Check-in (@codSeat)
+                                                        </button>
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        @if (tieneAlgunCheckIn)
+                                        {
+                                            <a href="@Url.Action("PaseAbordar", "CheckIn", new { codigoReserva = r.CodigoReserva })" class="btn btn-sm btn-outline-success">
+                                                Pase Abordar
+                                            </a>
+                                        }
+
+                                        <a href="@Url.Action("Gestionar", "Reservas", new { id = r.CodigoReserva })" class="btn btn-sm btn-outline-dark">
+                                            Gestionar
                                         </a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    }
+
+                                        <a href="@Url.Action("Index", "Comprobantes", new { codigoReserva = r.CodigoReserva })" class="btn btn-sm btn-outline-secondary">
+                                            Comprobantes
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
 
     <!-- Panel de Vuelos del Día para Control Operativo -->
     <div class="card card-avianca p-4 shadow-1">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h4 class="h5 fw-bold text-dark mb-0">Programación de Vuelos del Día</h4>
+            <h4 class="h5 fw-bold text-dark mb-0">Programaci&oacute;n de Vuelos de la Fecha (@fecha)</h4>
             @using (Html.BeginForm("Index", "Counter", FormMethod.Get, new { @class = "d-flex align-items-center gap-2" }))
             {
-                <label class="small text-muted fw-bold mb-0">Fecha:</label>
+                <input type="hidden" name="busqueda" value="@busqueda" />
+                <label class="small text-muted fw-bold mb-0">Fecha Operativa:</label>
                 <input type="date" name="fecha" value="@fecha" class="form-control form-control-sm" onchange="this.form.submit()" />
             }
         </div>
 
         @if (!vuelos.Any())
         {
-            <p class="text-muted small mb-0">No hay vuelos programados para la fecha seleccionada (@fecha).</p>
+            <p class="text-muted small mb-0">No hay vuelos programados para la fecha seleccionada (@fecha). Seleccione otra fecha en el calendario superior.</p>
         }
         else
         {
@@ -174,13 +239,17 @@
                             <th>Ruta</th>
                             <th>Salida / Llegada</th>
                             <th>Aeronave</th>
+                            <th>Ocupaci&oacute;n</th>
                             <th>Estado</th>
-                            <th class="text-end">Acción</th>
+                            <th class="text-end">Acci&oacute;n</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var v in vuelos)
                         {
+                            int ocupados = v.ReservaPasajeroVueloes.Count(a => a.EstadoAsignacionCodigo == "CONFIRMADA");
+                            int reservados = v.ReservaPasajeroVueloes.Count(a => a.EstadoAsignacionCodigo == "PENDIENTE");
+
                             <tr>
                                 <td class="fw-bold font-monospace">VIP@(v.VueloId.ToString("D5"))</td>
                                 <td>
@@ -196,12 +265,20 @@
                                         @(v.Aeronave?.Matricula ?? "Sin asignar") (@(v.Aeronave?.ModeloAeronave?.Nombre ?? "Phenom 300E"))
                                     </span>
                                 </td>
+                                <td class="small">
+                                    <span class="badge bg-danger">@ocupados Ocupados</span>
+                                    @if (reservados > 0)
+                                    {
+                                        <span class="badge text-white" style="background-color: #6F42C1;">@reservados Reservados</span>
+                                    }
+                                    <span class="badge bg-success">@(Math.Max(0, 7 - ocupados - reservados)) Libres</span>
+                                </td>
                                 <td>
                                     <span class="badge bg-primary">@(v.EstadoVuelo?.Descripcion ?? v.EstadoVueloCodigo)</span>
                                 </td>
                                 <td class="text-end">
                                     <a href="@Url.Action("Disponibilidad", "Vuelos", new { id = v.VueloId })" class="btn btn-sm btn-avianca-outline-sm">
-                                        Ver Asientos Cabina
+                                        Ver Cabina
                                     </a>
                                 </td>
                             </tr>

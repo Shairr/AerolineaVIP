@@ -12,12 +12,58 @@ namespace AerolineaVIP.Controllers
     {
         private readonly AerolineaVIPEntities db = new AerolineaVIPEntities();
 
+        /// <summary>
+        /// Libera automáticamente las reservas en estado PENDIENTE cuya ventana de retención (20 min - DP-07) haya expirado,
+        /// pasando la reserva a EXPIRADA y los asientos a LIBERADA (Disponibles en Verde).
+        /// </summary>
+        public static void LiberarReservasExpiradas(AerolineaVIPEntities context)
+        {
+            if (context == null) return;
+            try
+            {
+                DateTime ahora = DateTime.Now;
+                var expiradas = context.Reservas
+                    .Include(r => r.ReservaPasajeroVueloes)
+                    .Where(r => r.EstadoReservaCodigo == "PENDIENTE"
+                             && r.FechaExpiracion.HasValue
+                             && r.FechaExpiracion.Value < ahora)
+                    .ToList();
+
+                if (expiradas.Any())
+                {
+                    foreach (var res in expiradas)
+                    {
+                        res.EstadoReservaCodigo = "EXPIRADA";
+                        res.FechaActualizacion = ahora;
+                        res.Observaciones = (res.Observaciones ?? "") + " | Expirada automáticamente por superar 20 min sin pago (DP-07).";
+                        foreach (var rpv in res.ReservaPasajeroVueloes.Where(a => a.EstadoAsignacionCodigo == "PENDIENTE"))
+                        {
+                            rpv.EstadoAsignacionCodigo = "LIBERADA";
+                            LiberarAsientos(rpv.VueloId, new[] { MapearNumeroAsientoACodigo(rpv.NumeroAsiento) });
+                        }
+                    }
+                    context.SaveChanges();
+                }
+            }
+            catch
+            {
+                // Ignorar errores de concurrencia en limpieza automática
+            }
+        }
+
         // GET: Vuelos/Buscar (Pantalla 5)
         [HttpGet]
-        public ActionResult Buscar()
+        public ActionResult Buscar(string origen = null, string destino = null, DateTime? fechaSalida = null, int? pasajeros = null, string tipoViaje = null)
         {
+            LiberarReservasExpiradas(db);
+
             var model = new BusquedaVueloViewModel();
             CargarAeropuertosEnModelo(model);
+
+            if (!string.IsNullOrWhiteSpace(origen)) model.OrigenCodigo = origen;
+            if (!string.IsNullOrWhiteSpace(destino)) model.DestinoCodigo = destino;
+            if (pasajeros.HasValue && pasajeros.Value >= 1 && pasajeros.Value <= 7) model.CantidadPasajeros = pasajeros.Value;
+            if (!string.IsNullOrWhiteSpace(tipoViaje)) model.TipoViaje = tipoViaje;
 
             // Obtener rutas y días de operación reales de la BD para la guía informativa
             ViewBag.RutasFrecuencias = ObtenerRutasConFrecuencias();
@@ -28,7 +74,7 @@ namespace AerolineaVIP.Controllers
                 .OrderBy(v => v.FechaOperacion)
                 .FirstOrDefault();
 
-            model.FechaSalida = proximoVuelo != null ? proximoVuelo.FechaOperacion : DateTime.Today.AddDays(1);
+            model.FechaSalida = fechaSalida ?? (proximoVuelo != null ? proximoVuelo.FechaOperacion : DateTime.Today.AddDays(1));
             model.FechaRegreso = model.FechaSalida.Value.AddDays(3);
 
             return View(model);
@@ -38,6 +84,8 @@ namespace AerolineaVIP.Controllers
         [HttpGet]
         public ActionResult Resultados(string origen = "UIO", string destino = "GYE", DateTime? fechaSalida = null, DateTime? fechaRegreso = null, string tipoViaje = "solo-ida", int pasajeros = 1)
         {
+            LiberarReservasExpiradas(db);
+
             if (string.IsNullOrWhiteSpace(origen)) origen = "UIO";
             if (string.IsNullOrWhiteSpace(destino)) destino = "GYE";
             if (pasajeros < 1) pasajeros = 1;
@@ -59,7 +107,18 @@ namespace AerolineaVIP.Controllers
 
             CargarAeropuertosEnModelo(resultado.Criterios);
 
-            // Consulta base de vuelos reales en Entity Framework con todas sus relaciones
+            bool esConexionUioGps = (origen == "UIO" && destino == "GPS") || (origen == "GPS" && destino == "UIO");
+            string origenConsulta = origen;
+            string destinoConsulta = destino;
+
+            if (esConexionUioGps)
+            {
+                // DP-04 / DP-09 / DP-10: UIO <-> GPS opera los domingos con conexión en Guayaquil (GYE) y tarifa combinada USD 1,100
+                origenConsulta = (origen == "UIO") ? "GYE" : "GPS";
+                destinoConsulta = (origen == "UIO") ? "GPS" : "GYE";
+            }
+
+            // Consulta base de vuelos reales en Entity Framework con todas sus relaciones (solo aeronaves DISPONIBLES - RNP-08)
             var query = db.Vueloes
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto)
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto1)
@@ -67,9 +126,10 @@ namespace AerolineaVIP.Controllers
                 .AsNoTracking()
                 .Include(v => v.ReservaPasajeroVueloes.Select(rpv => rpv.CheckIns))
                 .Include(v => v.ReservaPasajeroVueloes.Select(rpv => rpv.Reserva))
-                .Where(v => v.Frecuencia.Ruta.Aeropuerto.CodigoIATA == origen
-                         && v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA == destino
-                         && v.EstadoVueloCodigo != "CANCELADO");
+                .Where(v => v.Frecuencia.Ruta.Aeropuerto.CodigoIATA == origenConsulta
+                         && v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA == destinoConsulta
+                         && v.EstadoVueloCodigo != "CANCELADO"
+                         && v.Aeronave.EstadoAeronaveCodigo == "DISPONIBLE");
 
             List<Vuelo> vuelosDb = new List<Vuelo>();
 
@@ -117,40 +177,68 @@ namespace AerolineaVIP.Controllers
                 resultado.FechaConVuelos = vuelosDb.Any();
             }
 
+            var aeroUio = esConexionUioGps ? db.Aeropuertoes.FirstOrDefault(a => a.CodigoIATA == "UIO") : null;
+            var aeroGps = esConexionUioGps ? db.Aeropuertoes.FirstOrDefault(a => a.CodigoIATA == "GPS") : null;
+
             // Mapeo a ViewModels con cálculo dinámico de disponibilidad y tarifas de BD
             foreach (var v in vuelosDb)
             {
                 int capacidad = v.Aeronave?.ModeloAeronave?.CapacidadAsientos ?? 7;
-                int ocupados = v.ReservaPasajeroVueloes.Count(r => r.EstadoAsignacionCodigo != "CANCELADA");
+                int ocupados = v.ReservaPasajeroVueloes.Count(r => r.EstadoAsignacionCodigo != "CANCELADA" && r.EstadoAsignacionCodigo != "LIBERADA");
                 int disponibles = Math.Max(0, capacidad - ocupados);
 
-                decimal tarifaBase = v.Frecuencia?.Ruta?.TarifaReferencial ?? 450.00m;
+                decimal tarifaBase = esConexionUioGps
+                    ? 1100.00m
+                    : (v.Frecuencia?.Ruta?.TarifaReferencial ?? 450.00m);
                 decimal tarifaFlex = Math.Round(tarifaBase * 1.35m, 2);
 
-                TimeSpan duracion = (v.Frecuencia.HoraLlegada >= v.Frecuencia.HoraSalida)
-                    ? (v.Frecuencia.HoraLlegada - v.Frecuencia.HoraSalida)
-                    : (v.Frecuencia.HoraLlegada.Add(TimeSpan.FromHours(24)) - v.Frecuencia.HoraSalida);
+                TimeSpan horaSalidaMostrada = v.Frecuencia.HoraSalida;
+                TimeSpan horaLlegadaMostrada = v.Frecuencia.HoraLlegada;
+
+                if (esConexionUioGps)
+                {
+                    if (origen == "UIO")
+                    {
+                        horaSalidaMostrada = new TimeSpan(7, 0, 0); // Tramo 1 UIO->GYE sale 07:00, conecta GYE->GPS 09:00-11:00
+                    }
+                    else
+                    {
+                        horaLlegadaMostrada = new TimeSpan(16, 0, 0); // Tramo 1 GPS->GYE 12:00-14:00, conecta GYE->UIO 15:00-16:00
+                    }
+                }
+
+                TimeSpan duracion = (horaLlegadaMostrada >= horaSalidaMostrada)
+                    ? (horaLlegadaMostrada - horaSalidaMostrada)
+                    : (horaLlegadaMostrada.Add(TimeSpan.FromHours(24)) - horaSalidaMostrada);
 
                 string duracionStr = duracion.Hours > 0
                     ? $"{duracion.Hours}h {duracion.Minutes:D2}m"
                     : $"{duracion.Minutes} min";
 
-                bool esDirecto = v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA != "GPS";
+                bool esDirecto = !esConexionUioGps && v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA != "GPS";
 
                 resultado.Vuelos.Add(new VueloItemViewModel
                 {
                     VueloId = v.VueloId,
                     FechaOperacion = v.FechaOperacion,
                     DiaSemanaNombre = ObtenerNombreDiaSemana(v.Frecuencia.DiaSemana),
-                    HoraSalida = v.Frecuencia.HoraSalida,
-                    HoraLlegada = v.Frecuencia.HoraLlegada,
+                    HoraSalida = horaSalidaMostrada,
+                    HoraLlegada = horaLlegadaMostrada,
                     DuracionTexto = duracionStr,
-                    OrigenCodigo = v.Frecuencia.Ruta.Aeropuerto.CodigoIATA,
-                    OrigenNombre = v.Frecuencia.Ruta.Aeropuerto.Nombre,
-                    OrigenCiudad = v.Frecuencia.Ruta.Aeropuerto.Localidad,
-                    DestinoCodigo = v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA,
-                    DestinoNombre = v.Frecuencia.Ruta.Aeropuerto1.Nombre,
-                    DestinoCiudad = v.Frecuencia.Ruta.Aeropuerto1.Localidad,
+                    OrigenCodigo = esConexionUioGps ? origen : v.Frecuencia.Ruta.Aeropuerto.CodigoIATA,
+                    OrigenNombre = esConexionUioGps
+                        ? (origen == "UIO" ? (aeroUio?.Nombre ?? "Aeropuerto Internacional Mariscal Sucre") : (aeroGps?.Nombre ?? "Aeropuerto Ecológico Galápagos Seymour"))
+                        : v.Frecuencia.Ruta.Aeropuerto.Nombre,
+                    OrigenCiudad = esConexionUioGps
+                        ? (origen == "UIO" ? "Quito" : "Isla Baltra - Galápagos")
+                        : v.Frecuencia.Ruta.Aeropuerto.Localidad,
+                    DestinoCodigo = esConexionUioGps ? destino : v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA,
+                    DestinoNombre = esConexionUioGps
+                        ? (destino == "GPS" ? (aeroGps?.Nombre ?? "Aeropuerto Ecológico Galápagos Seymour") : (aeroUio?.Nombre ?? "Aeropuerto Internacional Mariscal Sucre"))
+                        : v.Frecuencia.Ruta.Aeropuerto1.Nombre,
+                    DestinoCiudad = esConexionUioGps
+                        ? (destino == "GPS" ? "Isla Baltra - Galápagos" : "Quito")
+                        : v.Frecuencia.Ruta.Aeropuerto1.Localidad,
                     AeronaveMatricula = v.Aeronave?.Matricula ?? "AV-01",
                     ModeloAeronave = v.Aeronave?.ModeloAeronave?.Nombre ?? "Phenom 300E",
                     CapacidadTotal = capacidad,
@@ -160,7 +248,9 @@ namespace AerolineaVIP.Controllers
                     TarifaFlex = tarifaFlex,
                     EstadoVueloCodigo = v.EstadoVueloCodigo,
                     EsVueloDirecto = esDirecto,
-                    EscalaInfo = esDirecto ? null : "Escala técnica en Guayaquil (GYE)"
+                    EscalaInfo = esConexionUioGps
+                        ? "Itinerario con escala en Guayaquil (GYE) · Turnaround 60 min (DP-03/DP-04)"
+                        : (esDirecto ? null : "Vuelo directo insular (GYE ↔ GPS)")
                 });
             }
 
@@ -226,26 +316,57 @@ namespace AerolineaVIP.Controllers
                 });
             }
 
+            // Añadir información de rutas en conexión dominical UIO <-> GPS vía GYE (DP-04 / DP-09 / DP-10)
+            list.Add(new RutaInfoViewModel
+            {
+                RutaId = 901,
+                OrigenCodigo = "UIO",
+                OrigenCiudad = "Quito",
+                DestinoCodigo = "GPS",
+                DestinoCiudad = "Isla Baltra - Galápagos (vía GYE)",
+                TarifaReferencial = 1100.00m,
+                DiasOperacion = "Domingo",
+                HorariosResumen = "07:00 (Conexión en GYE 09:00)"
+            });
+
+            list.Add(new RutaInfoViewModel
+            {
+                RutaId = 902,
+                OrigenCodigo = "GPS",
+                OrigenCiudad = "Isla Baltra - Galápagos",
+                DestinoCodigo = "UIO",
+                DestinoCiudad = "Quito (vía GYE)",
+                TarifaReferencial = 1100.00m,
+                DiasOperacion = "Domingo",
+                HorariosResumen = "12:00 (Conexión en GYE 15:00)"
+            });
+
             return list;
         }
 
         private List<DiaTarifaViewModel> GenerarCalendarioSemanalReal(string origen, string destino, DateTime fechaBase)
         {
             var calendario = new List<DiaTarifaViewModel>();
-            DateTime inicioSemana = fechaBase.AddDays(-(int)fechaBase.DayOfWeek + 1); // Lunes de esa semana
+            int diffLunes = ((int)fechaBase.DayOfWeek == 0) ? -6 : (1 - (int)fechaBase.DayOfWeek);
+            DateTime inicioSemana = fechaBase.Date.AddDays(diffLunes);
+
+            bool esConexionUioGps = (origen == "UIO" && destino == "GPS") || (origen == "GPS" && destino == "UIO");
+            string origenConsulta = esConexionUioGps ? (origen == "UIO" ? "GYE" : "GPS") : origen;
+            string destinoConsulta = esConexionUioGps ? (origen == "UIO" ? "GPS" : "GYE") : destino;
 
             for (int i = 0; i < 7; i++)
             {
                 DateTime dia = inicioSemana.AddDays(i);
                 var vuelosDia = db.Vueloes
-                    .Where(v => v.Frecuencia.Ruta.Aeropuerto.CodigoIATA == origen
-                             && v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA == destino
+                    .Where(v => v.Frecuencia.Ruta.Aeropuerto.CodigoIATA == origenConsulta
+                             && v.Frecuencia.Ruta.Aeropuerto1.CodigoIATA == destinoConsulta
                              && v.EstadoVueloCodigo != "CANCELADO"
+                             && v.Aeronave.EstadoAeronaveCodigo == "DISPONIBLE"
                              && DbFunctions.TruncateTime(v.FechaOperacion) == dia.Date)
                     .ToList();
 
                 decimal? minTarifa = vuelosDia.Any()
-                    ? vuelosDia.Min(v => v.Frecuencia.Ruta.TarifaReferencial)
+                    ? (esConexionUioGps ? 1100.00m : vuelosDia.Min(v => v.Frecuencia.Ruta.TarifaReferencial))
                     : (decimal?)null;
 
                 calendario.Add(new DiaTarifaViewModel
@@ -305,6 +426,8 @@ namespace AerolineaVIP.Controllers
         [OutputCache(NoStore = true, Duration = 0, VaryByParam = "*")]
         public ActionResult Disponibilidad(int? id)
         {
+            LiberarReservasExpiradas(db);
+
             var query = db.Vueloes
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto)
                 .Include(v => v.Frecuencia.Ruta.Aeropuerto1)
@@ -340,7 +463,7 @@ namespace AerolineaVIP.Controllers
             decimal tarifaBase = vuelo.Frecuencia?.Ruta?.TarifaReferencial ?? 450.00m;
             decimal tarifaFlex = Math.Round(tarifaBase * 1.35m, 2);
 
-            // Obtener ocupaciones de este vuelo (combinando DB, sesiÃ³n y memoria global)
+            // Obtener ocupaciones de este vuelo (combinando DB, sesión y memoria global)
             var asignaciones = ObtenerAsignacionesCombinadas(
                 vuelo.VueloId,
                 vuelo.ReservaPasajeroVueloes,
@@ -384,74 +507,20 @@ namespace AerolineaVIP.Controllers
             return View(model);
         }
 
-        private static readonly ConcurrentDictionary<int, HashSet<string>> _asientosOcupadosGlobal = 
-            new ConcurrentDictionary<int, HashSet<string>>();
-
-        private static readonly ConcurrentDictionary<int, HashSet<string>> _asientosCheckInCompletadoGlobal = 
-            new ConcurrentDictionary<int, HashSet<string>>();
-
-        private static readonly ConcurrentDictionary<string, bool> _codigosReservaCheckInCompletado = 
-            new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
+        // Control de ocupaciÃ³n y liberaciÃ³n gestionado directamente en SQL Server (dbo.ReservaPasajeroVuelo y dbo.CheckIn)
         public static void RegistrarAsientosOcupados(int vueloId, IEnumerable<string> codigos)
         {
-            if (codigos == null) return;
-            var set = _asientosOcupadosGlobal.GetOrAdd(vueloId, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
-            lock (set)
-            {
-                foreach (var c in codigos)
-                {
-                    if (!string.IsNullOrWhiteSpace(c))
-                        set.Add(c.Trim().ToUpperInvariant());
-                }
-            }
+            // Persistencia directa en base de datos; no requiere bloqueo de memoria
         }
 
         public static void RegistrarCheckInCompletado(string codigoReserva, int vueloId, IEnumerable<string> codigos = null)
         {
-            if (!string.IsNullOrWhiteSpace(codigoReserva))
-            {
-                _codigosReservaCheckInCompletado[codigoReserva.Trim().ToUpperInvariant()] = true;
-            }
-            if (codigos != null)
-            {
-                var set = _asientosCheckInCompletadoGlobal.GetOrAdd(vueloId, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
-                lock (set)
-                {
-                    foreach (var c in codigos)
-                    {
-                        if (!string.IsNullOrWhiteSpace(c))
-                            set.Add(c.Trim().ToUpperInvariant());
-                    }
-                }
-            }
+            // Persistencia directa en base de datos; no requiere bloqueo de memoria
         }
 
         public static void LiberarAsientos(int vueloId, IEnumerable<string> codigos)
         {
-            if (codigos == null) return;
-            if (_asientosOcupadosGlobal.TryGetValue(vueloId, out var set))
-            {
-                lock (set)
-                {
-                    foreach (var c in codigos)
-                    {
-                        if (!string.IsNullOrWhiteSpace(c))
-                            set.Remove(c.Trim().ToUpperInvariant());
-                    }
-                }
-            }
-            if (_asientosCheckInCompletadoGlobal.TryGetValue(vueloId, out var setCheckIn))
-            {
-                lock (setCheckIn)
-                {
-                    foreach (var c in codigos)
-                    {
-                        if (!string.IsNullOrWhiteSpace(c))
-                            setCheckIn.Remove(c.Trim().ToUpperInvariant());
-                    }
-                }
-            }
+            // Persistencia directa en base de datos; no requiere bloqueo de memoria
         }
 
         public static MapaCabinaViewModel GenerarMapaPhenom300E(
@@ -468,16 +537,29 @@ namespace AerolineaVIP.Controllers
                 .Select(s => s.Trim().ToUpperInvariant())
                 .ToList();
 
-            var asientosDefecto = new[]
+            // Lectura dinamica directa desde dbo.Asiento en SQL Server
+            List<Asiento> asientosDesdeBd = null;
+            try
             {
-                new { Num = 1, Cod = "1D", Fila = (byte)1, Lado = "D", Ubic = "Fila 1, lado derecho, ventanilla (junto a cabina de mando)" },
-                new { Num = 2, Cod = "2D", Fila = (byte)2, Lado = "D", Ubic = "Fila 2, lado derecho, ventanilla" },
-                new { Num = 3, Cod = "2I", Fila = (byte)2, Lado = "I", Ubic = "Fila 2, lado izquierdo, ventanilla (tras puerta de acceso)" },
-                new { Num = 4, Cod = "3D", Fila = (byte)3, Lado = "D", Ubic = "Fila 3, lado derecho, ventanilla (mesa ejecutiva)" },
-                new { Num = 5, Cod = "3I", Fila = (byte)3, Lado = "I", Ubic = "Fila 3, lado izquierdo, ventanilla (mesa ejecutiva)" },
-                new { Num = 6, Cod = "4D", Fila = (byte)4, Lado = "D", Ubic = "Fila 4, lado derecho, ventanilla (junto al baÃ±o VIP)" },
-                new { Num = 7, Cod = "4I", Fila = (byte)4, Lado = "I", Ubic = "Fila 4, lado izquierdo, ventanilla" }
-            };
+                using (var dbContext = new AerolineaVIPEntities())
+                {
+                    asientosDesdeBd = dbContext.Asientoes.OrderBy(a => a.NumeroAsiento).ToList();
+                }
+            }
+            catch { }
+
+            var listaAsientosDefinicion = (asientosDesdeBd != null && asientosDesdeBd.Any())
+                ? asientosDesdeBd.Select(a => new { Num = (int)a.NumeroAsiento, Cod = a.Codigo, Fila = a.Fila, Lado = a.Lado, Ubic = a.Ubicacion }).ToList()
+                : new[]
+                {
+                    new { Num = 1, Cod = "1D", Fila = (byte)1, Lado = "D", Ubic = "Fila 1, lado derecho, ventanilla (junto a cabina de mando)" },
+                    new { Num = 2, Cod = "2D", Fila = (byte)2, Lado = "D", Ubic = "Fila 2, lado derecho, ventanilla" },
+                    new { Num = 3, Cod = "2I", Fila = (byte)2, Lado = "I", Ubic = "Fila 2, lado izquierdo, ventanilla (tras puerta de acceso)" },
+                    new { Num = 4, Cod = "3D", Fila = (byte)3, Lado = "D", Ubic = "Fila 3, lado derecho, ventanilla (mesa ejecutiva)" },
+                    new { Num = 5, Cod = "3I", Fila = (byte)3, Lado = "I", Ubic = "Fila 3, lado izquierdo, ventanilla (mesa ejecutiva)" },
+                    new { Num = 6, Cod = "4D", Fila = (byte)4, Lado = "D", Ubic = "Fila 4, lado derecho, ventanilla (junto al baÃ±o VIP)" },
+                    new { Num = 7, Cod = "4I", Fila = (byte)4, Lado = "I", Ubic = "Fila 4, lado izquierdo, ventanilla" }
+                }.ToList();
 
             var mapa = new MapaCabinaViewModel
             {
@@ -489,57 +571,51 @@ namespace AerolineaVIP.Controllers
                 AsientosSeleccionadosCodigos = preseleccionados
             };
 
-            foreach (var item in asientosDefecto)
+            foreach (var item in listaAsientosDefinicion)
             {
-                var asig = asignaciones?.FirstOrDefault(a => a.NumeroAsiento == item.Num);
+                var asig = asignaciones?.FirstOrDefault(a => a.NumeroAsiento == item.Num
+                    && a.EstadoAsignacionCodigo != "CANCELADA"
+                    && a.EstadoAsignacionCodigo != "LIBERADA");
 
                 string visual = "DISPONIBLE";
                 string color = "Verde";
+                bool tieneCheckIn = false;
 
-                if (asig != null && asig.EstadoAsignacionCodigo != "CANCELADA")
+                if (asig != null)
                 {
-                    // Determinar si el check-in ha sido completado
-                    bool tieneCheckIn = false;
-
-                    // 1. Si la asignaciÃ³n en BD contiene un CheckIn completado
+                    // Verificar si cuenta con check-in completado
                     if (asig.CheckIns != null && asig.CheckIns.Any(c => c.EstadoCheckInCodigo == "COMPLETADO"))
                     {
                         tieneCheckIn = true;
                     }
-                    // 2. Si el cÃ³digo de reserva tiene check-in completado (sesiÃ³n o BD)
                     else if (asig.Reserva != null && !string.IsNullOrWhiteSpace(asig.Reserva.CodigoReserva))
                     {
                         string codRes = asig.Reserva.CodigoReserva.Trim().ToUpperInvariant();
-                        if (_codigosReservaCheckInCompletado.ContainsKey(codRes) ||
+                        if (
                             (codigosCheckInSesion != null && codigosCheckInSesion.Contains(codRes, StringComparer.OrdinalIgnoreCase)))
                         {
                             tieneCheckIn = true;
                         }
                     }
-                    // 3. Si el asiento estÃ¡ en la memoria global de check-ins
-                    if (!tieneCheckIn && _asientosCheckInCompletadoGlobal.TryGetValue(vueloId, out var setCheckIn))
-                    {
-                        lock (setCheckIn)
-                        {
-                            if (setCheckIn.Contains(item.Cod))
-                            {
-                                tieneCheckIn = true;
-                            }
-                        }
-                    }
 
-                    // Regla de negocio solicitada:
-                    // - Si el asiento estÃ¡ reservado pero aÃºn no efectÃºa el check-in -> MORADO (RESERVADO)
-                    // - Cuando se haya confirmado el check-in -> ROJO (OCUPADO)
-                    if (tieneCheckIn)
-                    {
-                        visual = "OCUPADO";
-                        color = "Rojo";
-                    }
-                    else
+
+
+                    // Regla oficial DP-11 / RG-18 / Sección 6.5 del Enunciado:
+                    // - Disponible (Verde): sin asignación activa (o CANCELADA / LIBERADA)
+                    // - Reservado (Morado): reserva creada pendiente de pago (EstadoAsignacionCodigo == "PENDIENTE")
+                    // - Ocupado (Rojo): compra confirmada / pago aprobado (EstadoAsignacionCodigo == "CONFIRMADA")
+                    bool esPendientePago = string.Equals(asig.EstadoAsignacionCodigo, "PENDIENTE", StringComparison.OrdinalIgnoreCase)
+                        || (asig.Reserva != null && string.Equals(asig.Reserva.EstadoReservaCodigo, "PENDIENTE", StringComparison.OrdinalIgnoreCase));
+
+                    if (esPendientePago && !tieneCheckIn)
                     {
                         visual = "RESERVADO";
                         color = "Morado";
+                    }
+                    else
+                    {
+                        visual = "OCUPADO";
+                        color = "Rojo";
                     }
                 }
 
@@ -555,7 +631,8 @@ namespace AerolineaVIP.Controllers
                     EstadoVisual = visual,
                     ColorEstado = color,
                     EsSeleccionado = seleccionado,
-                    EsAccesible = (visual == "DISPONIBLE")
+                    EsAccesible = (visual == "DISPONIBLE"),
+                    TieneCheckIn = tieneCheckIn
                 });
             }
 
@@ -601,15 +678,15 @@ namespace AerolineaVIP.Controllers
             IEnumerable<ReservaResumenItemViewModel> reservasSesion = null)
         {
             var resultado = asignacionesDb != null 
-                ? asignacionesDb.Where(a => a.EstadoAsignacionCodigo != "CANCELADA").ToList() 
+                ? asignacionesDb.Where(a => a.EstadoAsignacionCodigo != "CANCELADA" && a.EstadoAsignacionCodigo != "LIBERADA").ToList() 
                 : new List<ReservaPasajeroVuelo>();
 
-            // 1. Integrar reservas confirmadas en la sesiÃ³n del usuario
+            // 1. Integrar reservas de la sesión del usuario si aún no están en el listado de BD
             if (reservasSesion != null)
             {
                 foreach (var r in reservasSesion)
                 {
-                    if (r.VueloId == vueloId && r.EstadoReservaCodigo != "CANCELADA" && !string.IsNullOrWhiteSpace(r.AsientosCodigos))
+                    if (r.VueloId == vueloId && r.EstadoReservaCodigo != "CANCELADA" && r.EstadoReservaCodigo != "EXPIRADA" && !string.IsNullOrWhiteSpace(r.AsientosCodigos))
                     {
                         var cods = r.AsientosCodigos.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         foreach (var cod in cods)
@@ -622,7 +699,7 @@ namespace AerolineaVIP.Controllers
                                 {
                                     VueloId = vueloId,
                                     NumeroAsiento = num,
-                                    EstadoAsignacionCodigo = "CONFIRMADA",
+                                    EstadoAsignacionCodigo = (r.EstadoReservaCodigo == "PENDIENTE") ? "PENDIENTE" : "CONFIRMADA",
                                     ImporteTramo = 450.00m,
                                     FechaAsignacion = r.FechaCreacion,
                                     Reserva = new Reserva
@@ -660,31 +737,9 @@ namespace AerolineaVIP.Controllers
                 }
             }
 
-            // 2. Integrar asientos ocupados registrados en la memoria global de la aplicaciÃ³n
-            if (_asientosOcupadosGlobal.TryGetValue(vueloId, out var setGlobal))
-            {
-                lock (setGlobal)
-                {
-                    foreach (var cod in setGlobal)
-                    {
-                        byte num = MapearCodigoANumeroAsiento(cod);
-                        if (!resultado.Any(a => a.NumeroAsiento == num))
-                        {
-                            resultado.Add(new ReservaPasajeroVuelo
-                            {
-                                VueloId = vueloId,
-                                NumeroAsiento = num,
-                                EstadoAsignacionCodigo = "CONFIRMADA",
-                                ImporteTramo = 450.00m,
-                                FechaAsignacion = DateTime.Now
-                            });
-                        }
-                    }
-                }
-            }
-
             return resultado;
         }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)

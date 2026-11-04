@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace AerolineaVIP.Models
@@ -66,6 +66,10 @@ namespace AerolineaVIP.Models
 
     public class RegisterViewModel
     {
+        [Required(ErrorMessage = "El nombre de usuario es obligatorio.")]
+        [Display(Name = "Nombre de usuario")]
+        public string UserName { get; set; }
+
         [Required]
         [EmailAddress]
         [Display(Name = "Email")]

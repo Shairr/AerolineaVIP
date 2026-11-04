@@ -5,34 +5,36 @@
 }
 
 <div class="container py-4">
-    <!-- Encabezado de la Pantalla 12 con Notificación de Éxito -->
+    <!-- Encabezado con Notificación de Éxito -->
     <div class="card border-0 shadow-2 rounded-4 mb-4 text-center p-4 p-md-5" style="background: linear-gradient(180deg, var(--color-success-50) 0%, #FFFFFF 100%);">
         <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success text-white mb-3" style="width: 72px; height: 72px; font-size: 36px;">
             &#10003;
-        </div>
-        <div class="d-flex justify-content-center gap-2 mb-2">
-            <span class="badge bg-danger rounded-pill px-3 py-1">Pantalla 12</span>
-            <span class="badge bg-success text-white rounded-pill px-3 py-1">&#128274; Pago Aprobado y Transacci&oacute;n Exitosa</span>
         </div>
         <h1 class="h2 fw-bold text-dark mb-2">
             &iexcl;Su Vuelo Privado Est&aacute; Confirmado!
         </h1>
         <p class="text-secondary small max-w-700 mx-auto mb-4">
-            Hemos procesado exitosamente la reserva en la aeronave ejecutiva <strong>Embraer Phenom 300E</strong>. Se ha generado su c&oacute;digo oficial de reserva y los pases de abordar electr&oacute;nicos.
+            Hemos procesado exitosamente el pago simulado para la aeronave ejecutiva <strong>Embraer Phenom 300E</strong>. Se han emitido sus comprobantes electr&oacute;nicos acad&eacute;micos (Confirmaci&oacute;n <code>@Model.NumeroComprobanteConfirmacion</code> y Factura <code>@Model.NumeroComprobanteFactura</code>).
         </p>
 
         <!-- Bloque de Claves de la Transacción -->
         <div class="row g-3 justify-content-center max-w-700 mx-auto">
-            <div class="col-sm-6">
+            <div class="col-sm-4">
                 <div class="p-3 border rounded-3 bg-white shadow-sm">
                     <span class="small text-muted d-block">C&oacute;digo Oficial de Reserva</span>
-                    <strong class="h4 fw-bold text-danger text-uppercase mb-0">@Model.CodigoReserva</strong>
+                    <strong class="h5 fw-bold text-danger text-uppercase font-monospace mb-0">@Model.CodigoReserva</strong>
                 </div>
             </div>
-            <div class="col-sm-6">
+            <div class="col-sm-4">
                 <div class="p-3 border rounded-3 bg-white shadow-sm">
-                    <span class="small text-muted d-block">C&oacute;digo de Autorizaci&oacute;n Bancaria</span>
-                    <strong class="h4 fw-bold text-dark font-monospace mb-0">@Model.CodigoOperacion</strong>
+                    <span class="small text-muted d-block">C&oacute;digo de Operaci&oacute;n (DP-06)</span>
+                    <strong class="h5 fw-bold text-dark font-monospace mb-0">@Model.CodigoOperacion</strong>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="p-3 border rounded-3 bg-white shadow-sm">
+                    <span class="small text-muted d-block">Factura Acad&eacute;mica (DP-05)</span>
+                    <strong class="h5 fw-bold text-dark font-monospace mb-0">@Model.NumeroComprobanteFactura</strong>
                 </div>
             </div>
         </div>
@@ -47,7 +49,7 @@
             </div>
             <div class="col-md-3">
                 <span class="small text-muted d-block">M&eacute;todo de Pago:</span>
-                <strong class="text-dark">@Model.MarcaTarjeta @Model.TarjetaEnmascarada</strong>
+                <strong class="text-dark">@Model.MarcaTarjeta @Model.TarjetaEnmascarada (@(Model.MetodoPago == "TARJETA_DEBITO" ? "Débito" : "Crédito"))</strong>
             </div>
             <div class="col-md-3">
                 <span class="small text-muted d-block">Titular Autorizado:</span>
@@ -64,9 +66,9 @@
     <div class="mb-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h4 fw-bold text-dark mb-0">
-                Pases de Abordar Electr&oacute;nicos VIP (@Model.Pasajeros.Count emitidos)
+                Boletos Electr&oacute;nicos VIP (@Model.Pasajeros.Count emitidos)
             </h2>
-            <span class="small text-muted">Presentar documento de identidad y este pase en sala ejecutiva</span>
+            <span class="small text-muted">Recuerde realizar su Check-in entre 24h y 1h antes del vuelo (DP-12)</span>
         </div>
 
         <div class="row g-4">
@@ -78,7 +80,7 @@
                         <div class="pase-header d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="badge bg-white text-danger fw-bold me-2">AEROL&Iacute;NEA VIP</span>
-                                <span class="small fw-semibold">BOARDING PASS</span>
+                                <span class="small fw-semibold">E-TICKET CONFIRMATION</span>
                             </div>
                             <span class="fw-bold">@Model.AeronaveMatricula &bull; Phenom 300E</span>
                         </div>
@@ -126,7 +128,6 @@
                                     <div>&#128197; <strong>Fecha:</strong> @Model.FechaOperacion.ToString("dd MMM yyyy")</div>
                                     <div>&#127970; <strong>Sala de Espera:</strong> Hangar Privado VIP</div>
                                     <div>&#9201; <strong>Embarque:</strong> 15 minutos antes del despegue</div>
-                                    <div>&#128092; <strong>Equipaje:</strong> 23 kg bodega + 10 kg mano</div>
                                 </div>
                                 <div class="col-5 text-center">
                                     <div class="codigo-qr-mock mb-1" title="Código QR Digital"></div>
@@ -144,16 +145,16 @@
     <div class="card card-avianca p-4 shadow-1 text-center">
         <h4 class="h5 fw-bold text-dark mb-3">&iquest;Qu&eacute; desea hacer a continuaci&oacute;n?</h4>
         <div class="d-flex flex-wrap justify-content-center gap-3">
-            <a href="@Url.Action("MisReservas", "Reservas")" class="btn btn-danger fw-bold rounded-pill px-4 py-2" style="background-color: #E1251B; border-color: #E1251B;">
-                <i class="bi bi-briefcase-fill me-1"></i> Ir a Mis Reservas
+            <a href="@Url.Action("Comprobante", "Reservas", new { id = Model.CodigoReserva })" class="btn btn-outline-dark fw-bold rounded-pill px-4 py-2">
+                &#128196; Ver Comprobante Acad&eacute;mico (@Model.NumeroComprobanteFactura)
             </a>
-            <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-avianca-primary px-4 py-2">
-                &#9992; Reservar Otro Vuelo
+            <a href="@Url.Action("Index", "CheckIn", new { codigoReserva = Model.CodigoReserva })" class="btn btn-danger fw-bold rounded-pill px-4 py-2" style="background-color: #E1251B; border-color: #E1251B;">
+                &#128241; Realizar Check-in
             </a>
-            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary px-4 py-2">
-                Volver a la P&aacute;gina de Inicio
+            <a href="@Url.Action("MisReservas", "Reservas")" class="btn btn-outline-danger fw-bold rounded-pill px-4 py-2">
+                &#128188; Ir a Mis Reservas
             </a>
-            <button type="button" class="btn btn-outline-danger px-4 py-2" onclick="window.print();">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2" onclick="window.print();">
                 &#128424; Imprimir Boletos
             </button>
         </div>

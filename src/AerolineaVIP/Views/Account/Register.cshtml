@@ -1,4 +1,4 @@
-﻿@model AerolineaVIP.Models.RegisterViewModel
+@model AerolineaVIP.Models.RegisterViewModel
 @{
     ViewBag.Title = "Registro de Pasajero VIP";
 }
@@ -7,7 +7,6 @@
     <div class="col-12 col-md-8 col-lg-6">
         <div class="card-avianca p-4 p-md-5 shadow-2">
             <div class="text-center mb-4">
-                <span class="badge-role badge-role-cliente mb-2">Registro de Cliente VIP</span>
                 <h2 class="h3 mb-1">Crea tu Cuenta</h2>
                 <p class="text-muted small">Disfruta de reservas privadas y gestión de pasajes ejecutivos</p>
             </div>
@@ -18,8 +17,14 @@
                 @Html.ValidationSummary(true, "", new { @class = "text-danger small mb-3" })
 
                 <div class="mb-3">
+                    <label class="form-label fw-bold small">Nombre de Usuario</label>
+                    @Html.TextBoxFor(m => m.UserName, new { @class = "form-control", placeholder = "Ej: cliente02", autofocus = "autofocus" })
+                    @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label fw-bold small">Correo Electrónico</label>
-                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "correo@ejemplo.com", autofocus = "autofocus" })
+                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "correo@ejemplo.com" })
                     @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
                 </div>
 

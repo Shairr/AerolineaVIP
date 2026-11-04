@@ -1,4 +1,4 @@
-﻿@model AerolineaVIP.Models.MisReservasViewModel
+@model AerolineaVIP.Models.MisReservasViewModel
 @{
     ViewBag.Title = "Mis Reservas - Portal Cliente VIP";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -26,16 +26,18 @@
     <!-- Encabezado del Portal -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center pb-4 mb-4 border-bottom">
         <div>
-            <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-bold text-uppercase mb-2">Portal Ejecutivo</span>
             <h1 class="h2 fw-bold text-dark mb-1">Mis Reservas</h1>
-            <p class="text-muted mb-0">Consulte, gestione o descargue los comprobantes fiscales de sus vuelos en flota ejecutiva Phenom 300E.</p>
+            <p class="text-muted mb-0">Consulte, pague reservas pendientes, realice check-in o descargue los comprobantes de sus vuelos en flota ejecutiva Phenom 300E.</p>
         </div>
-        <div class="mt-3 mt-md-0 d-flex gap-2">
+        <div class="mt-3 mt-md-0 d-flex flex-wrap gap-2">
+            <a href="@Url.Action("Index", "Comprobantes")" class="btn btn-outline-dark fw-bold rounded-pill px-4">
+                <i class="bi bi-receipt me-1"></i> Mis Comprobantes
+            </a>
             <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-outline-danger fw-bold rounded-pill px-4">
                 <i class="bi bi-search me-1"></i> Nueva Reserva
             </a>
             <a href="@Url.Action("Index", "CheckIn")" class="btn btn-danger fw-bold rounded-pill px-4 shadow-sm" style="background-color: #E1251B; border-color: #E1251B;">
-                <i class="bi bi-qr-code me-1"></i> Check-in en Línea
+                <i class="bi bi-qr-code me-1"></i> Check-in en L&iacute;nea
             </a>
         </div>
     </div>
@@ -49,9 +51,15 @@
             </a>
         </li>
         <li class="nav-item">
+            <a class="nav-link rounded-pill px-4 fw-bold @(Model.FiltroActual == "pendientes" ? "active bg-danger text-white" : "text-dark bg-light")"
+               href="@Url.Action("MisReservas", "Reservas", new { tab = "pendientes" })">
+                Pendientes de Pago <span class="badge rounded-pill ms-1 @(Model.FiltroActual == "pendientes" ? "bg-white text-danger" : "bg-warning text-dark")">@Model.TotalPendientes</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link rounded-pill px-4 fw-bold @(Model.FiltroActual == "proximas" ? "active bg-danger text-white" : "text-dark bg-light")"
                href="@Url.Action("MisReservas", "Reservas", new { tab = "proximas" })">
-                Próximas <span class="badge rounded-pill ms-1 @(Model.FiltroActual == "proximas" ? "bg-white text-danger" : "bg-secondary text-white")">@Model.TotalProximas</span>
+                Pr&oacute;ximas <span class="badge rounded-pill ms-1 @(Model.FiltroActual == "proximas" ? "bg-white text-danger" : "bg-secondary text-white")">@Model.TotalProximas</span>
             </a>
         </li>
         <li class="nav-item">
@@ -63,7 +71,7 @@
         <li class="nav-item">
             <a class="nav-link rounded-pill px-4 fw-bold @(Model.FiltroActual == "canceladas" ? "active bg-danger text-white" : "text-dark bg-light")"
                href="@Url.Action("MisReservas", "Reservas", new { tab = "canceladas" })">
-                Canceladas <span class="badge rounded-pill ms-1 @(Model.FiltroActual == "canceladas" ? "bg-white text-danger" : "bg-secondary text-white")">@Model.TotalCanceladas</span>
+                Canceladas / Expiradas <span class="badge rounded-pill ms-1 @(Model.FiltroActual == "canceladas" ? "bg-white text-danger" : "bg-secondary text-white")">@Model.TotalCanceladas</span>
             </a>
         </li>
     </ul>
@@ -80,30 +88,36 @@
                             <div class="d-flex align-items-center gap-3">
                                 <span class="fs-5 fw-bold text-dark font-monospace">@res.CodigoReserva</span>
                                 <span class="text-muted small">| Creada el @res.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</span>
+                                @if (res.EstaPendientePago && res.FechaExpiracion.HasValue)
+                                {
+                                    <span class="badge bg-warning text-dark small">
+                                        &#9200; Retenci&oacute;n hasta @res.FechaExpiracion.Value.ToString("HH:mm") (DP-07)
+                                    </span>
+                                }
                             </div>
                             <div>
-                                @if (res.EstadoReservaCodigo == "CANCELADA")
+                                @if (res.EstadoReservaCodigo == "CANCELADA" || res.EstadoReservaCodigo == "EXPIRADA")
                                 {
                                     <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill fw-bold">
-                                        <i class="bi bi-x-circle me-1"></i> Cancelada
+                                        <i class="bi bi-x-circle me-1"></i> @res.EstadoReservaCodigo
+                                    </span>
+                                }
+                                else if (res.EstadoReservaCodigo == "PENDIENTE")
+                                {
+                                    <span class="badge text-white px-3 py-2 rounded-pill fw-bold shadow-sm" style="background-color: #6F42C1;">
+                                        <i class="bi bi-hourglass-split me-1"></i> Reservada - Pendiente de Pago (Morado)
                                     </span>
                                 }
                                 else if (res.TieneCheckIn)
                                 {
                                     <span class="badge bg-success text-white px-3 py-2 rounded-pill fw-bold shadow-sm">
-                                        <i class="bi bi-qr-code-scan me-1"></i> Check-in Listo
-                                    </span>
-                                }
-                                else if (res.EstadoReservaCodigo == "CONFIRMADA")
-                                {
-                                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold">
-                                        <i class="bi bi-clock-history me-1"></i> Confirmada (Check-in Pendiente)
+                                        <i class="bi bi-qr-code-scan me-1"></i> Confirmada &bull; Check-in Listo
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill fw-bold">
-                                        @res.EstadoReservaCodigo
+                                    <span class="badge bg-danger text-white px-3 py-2 rounded-pill fw-bold shadow-sm">
+                                        <i class="bi bi-check2-circle me-1"></i> Confirmada - Ocupado (Rojo)
                                     </span>
                                 }
                             </div>
@@ -151,14 +165,16 @@
                                         </span>
                                     </div>
                                     <div>
-                                        <span class="text-muted small">Asientos reservados:</span>
-                                        <span class="badge bg-danger text-white rounded-pill px-2 fw-bold font-monospace">@(string.IsNullOrWhiteSpace(res.AsientosCodigos) ? "Por asignar" : res.AsientosCodigos)</span>
+                                        <span class="text-muted small">Asientos asignados:</span>
+                                        <span class="badge @(res.EstadoReservaCodigo == "PENDIENTE" ? "text-white" : "bg-danger text-white") rounded-pill px-2 fw-bold font-monospace" style="@(res.EstadoReservaCodigo == "PENDIENTE" ? "background-color: #6F42C1;" : "")">
+                                            @(string.IsNullOrWhiteSpace(res.AsientosCodigos) ? "Por asignar" : res.AsientosCodigos)
+                                        </span>
                                     </div>
                                 </div>
 
                                 <!-- Importe y Acciones -->
                                 <div class="col-lg-4 text-lg-end">
-                                    <div class="text-muted small">Total Pagado:</div>
+                                    <div class="text-muted small">@(res.EstaPendientePago ? "Total Pendiente de Pago:" : "Total Liquidado:")</div>
                                     <div class="h3 fw-bold text-dark mb-3">$@res.TotalPagado.ToString("N2") <small class="fs-6 text-muted">USD</small></div>
 
                                     <div class="d-flex flex-wrap justify-content-lg-end gap-2">
@@ -166,7 +182,13 @@
                                             <i class="bi bi-gear me-1"></i> Gestionar
                                         </a>
 
-                                        @if (res.TieneCheckIn)
+                                        @if (res.EstadoReservaCodigo == "PENDIENTE")
+                                        {
+                                            <a href="@Url.Action("Pagar", "Compras", new { reservaId = res.ReservaId, codigoPreReserva = res.CodigoReserva, vueloId = res.VueloId })" class="btn btn-danger btn-sm rounded-pill fw-bold px-3" style="background-color: #E1251B; border-color: #E1251B;">
+                                                <i class="bi bi-credit-card me-1"></i> Pagar Ahora
+                                            </a>
+                                        }
+                                        else if (res.TieneCheckIn)
                                         {
                                             <a href="@Url.Action("PaseAbordar", "CheckIn", new { codigoReserva = res.CodigoReserva })" class="btn btn-success btn-sm rounded-pill fw-semibold px-3">
                                                 <i class="bi bi-ticket-perforated me-1"></i> Ver Pases
@@ -179,9 +201,12 @@
                                             </a>
                                         }
 
-                                        <a href="@Url.Action("Comprobante", "Reservas", new { id = res.CodigoReserva })" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold px-3">
-                                            <i class="bi bi-file-earmark-pdf me-1"></i> SRI Factura
-                                        </a>
+                                        @if (res.EstadoReservaCodigo != "PENDIENTE")
+                                        {
+                                            <a href="@Url.Action("Comprobante", "Reservas", new { id = res.CodigoReserva })" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold px-3">
+                                                <i class="bi bi-file-earmark-pdf me-1"></i> Comprobante
+                                            </a>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -200,7 +225,7 @@
             </div>
             <h3 class="h4 fw-bold text-dark">No se encontraron reservas</h3>
             <p class="text-muted mx-auto" style="max-width: 480px;">
-                Actualmente no cuenta con reservas en la categoría seleccionada (@Model.FiltroActual). Explore nuestros itinerarios ejecutivos para reservar su próximo vuelo VIP.
+                Actualmente no cuenta con reservas en la categor&iacute;a seleccionada (@Model.FiltroActual). Explore nuestros itinerarios ejecutivos para reservar su pr&oacute;ximo vuelo VIP.
             </p>
             <a href="@Url.Action("Buscar", "Vuelos")" class="btn btn-danger rounded-pill fw-bold px-4 py-2 mt-2" style="background-color: #E1251B; border-color: #E1251B;">
                 <i class="bi bi-calendar-plus me-1"></i> Explorar Vuelos Disponibles

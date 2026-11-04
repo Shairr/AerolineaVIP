@@ -1,49 +1,26 @@
-﻿@model AerolineaVIP.Models.Aeronave
-
+@model AerolineaVIP.Models.Aeronave
 @{
-    ViewBag.Title = "Delete";
+    ViewBag.Title = "Dar de Baja Aeronave " + Model.Matricula;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Delete</h2>
-
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Aeronave</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.Matricula)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.Matricula)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.EstadoAeronave.Descripcion)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.EstadoAeronave.Descripcion)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.ModeloAeronave.Fabricante)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.ModeloAeronave.Fabricante)
-        </dd>
-
-    </dl>
-
-    @using (Html.BeginForm()) {
-        @Html.AntiForgeryToken()
-
-        <div class="form-actions no-color">
-            <input type="submit" value="Delete" class="btn btn-default" /> |
-            @Html.ActionLink("Back to List", "Index")
+<div class="container my-4">
+    <div class="card card-avianca p-4 shadow-1 border mx-auto" style="max-width: 680px;">
+        <div class="border-bottom pb-3 mb-4">
+            <h2 class="h4 fw-bold text-dark mb-0">&iquest;Confirma dar de baja la aeronave @Model.Matricula?</h2>
         </div>
-    }
+
+        <div class="alert alert-warning small">
+            Si la aeronave posee vuelos hist&oacute;ricos o programados (@(Model.Vueloes?.Count ?? 0) asociados), el sistema cambiar&aacute; su estado a <strong>NO_DISPONIBLE</strong> para preservar la trazabilidad operativa (RNP-08).
+        </div>
+
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+            <div class="d-flex justify-content-end gap-2">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Confirmar Baja</button>
+            </div>
+        }
+    </div>
 </div>
